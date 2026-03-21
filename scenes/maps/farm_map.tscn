@@ -1,0 +1,31 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/maps/farm_map.gd" id="1"]
+
+[node name="FarmMap" type="Node2D"]
+script = ExtResource("1")
+map_id = "farm"
+map_size = Vector2i(32, 24)
+
+[node name="GroundLayer" type="TileMapLayer" parent="."]
+
+[node name="CollisionLayer" type="TileMapLayer" parent="."]
+
+[node name="DecorationLayer" type="TileMapLayer" parent="."]
+
+[node name="InteractionLayer" type="TileMapLayer" parent="."]
+
+[node name="CropLayer" type="TileMapLayer" parent="."]
+
+[node name="Solids" type="Node2D" parent="."]
+
+[node name="Interactables" type="Node2D" parent="."]
+
+[node name="SpawnPoints" type="Node2D" parent="."]
+
+[node name="default" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(160, 208)
+
+[node name="from_house" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(360, 176)
+
