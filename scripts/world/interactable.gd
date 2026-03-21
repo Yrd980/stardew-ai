@@ -9,6 +9,5 @@ func can_be_interacted_with(target_world: Vector2, actor_world: Vector2) -> bool
 	return global_position.distance_to(target_world) <= radius and global_position.distance_to(actor_world) <= radius * 2.0
 
 
-func interact(_player: Node, _hud: Node) -> void:
-	pass
-
+func build_action_request() -> Dictionary:
+	return {}

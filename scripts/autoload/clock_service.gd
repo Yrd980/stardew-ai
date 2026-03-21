@@ -63,4 +63,14 @@ func sleep_and_advance_day() -> Dictionary:
 	var message := "You slept well. Day %s begins." % day
 	if int(settlement.get("total_earned", 0)) > 0:
 		message = "You slept well. Day %s begins. Shipping paid %sg." % [day, int(settlement.get("total_earned", 0))]
-	return {"success": true, "message": message, "settlement": settlement}
+	var events := [{"type": "day_advanced", "day": day}]
+	if int(settlement.get("total_earned", 0)) > 0:
+		events.append({"type": "shipments_settled", "total_earned": int(settlement.get("total_earned", 0))})
+	return {
+		"success": true,
+		"message": message,
+		"time_cost": 0,
+		"events": events,
+		"directives": {},
+		"settlement": settlement
+	}

@@ -1,34 +1,46 @@
 extends Node
 
+signal money_changed(amount: int)
 signal pending_shipments_changed
 signal shipment_settled(summary: Dictionary)
 signal purchase_completed(result: Dictionary)
 
+var money := GameState.STARTING_MONEY
 var pending_shipments: Array = []
 var shop_purchase_counts := {}
 var last_settlement_summary := {}
 
 
 func reset_state() -> void:
+	money = GameState.STARTING_MONEY
 	pending_shipments = []
 	shop_purchase_counts = {}
 	last_settlement_summary = {}
+	money_changed.emit(money)
 	pending_shipments_changed.emit()
 
 
 func load_state(payload: Dictionary) -> void:
+	money = int(payload.get("money", GameState.STARTING_MONEY))
 	pending_shipments = payload.get("pending_shipments", []).duplicate(true)
 	shop_purchase_counts = payload.get("shop_purchase_counts", {}).duplicate(true)
 	last_settlement_summary = payload.get("last_settlement_summary", {}).duplicate(true)
+	money_changed.emit(money)
 	pending_shipments_changed.emit()
 
 
 func build_save_data() -> Dictionary:
 	return {
+		"money": money,
 		"pending_shipments": pending_shipments.duplicate(true),
 		"shop_purchase_counts": shop_purchase_counts.duplicate(true),
 		"last_settlement_summary": last_settlement_summary.duplicate(true)
 	}
+
+
+func add_money(amount: int) -> void:
+	money += amount
+	money_changed.emit(money)
 
 
 func queue_selected_stack_for_shipping() -> Dictionary:
@@ -64,7 +76,7 @@ func settle_pending_shipments() -> Dictionary:
 		total_earned += int(shipment.get("total_price", 0))
 		lines.append("%s x%s" % [String(shipment.get("item_id", "")), int(shipment.get("count", 0))])
 	if total_earned > 0:
-		GameState.add_money(total_earned)
+		add_money(total_earned)
 	var summary := {
 		"total_earned": total_earned,
 		"shipments": pending_shipments.duplicate(true),
@@ -93,11 +105,11 @@ func purchase_item(shop_id: String, item_id: String, quantity: int = 1) -> Dicti
 	if daily_limit > 0 and purchased_today + quantity > daily_limit:
 		return _result(false, "That item is sold out for today.")
 	var total_price := unit_price * quantity
-	if GameState.money < total_price:
+	if money < total_price:
 		return _result(false, "Not enough money.")
 	if not InventoryService.can_add_item(item_id, quantity):
 		return _result(false, "Inventory full. Make room before buying.")
-	GameState.add_money(-total_price)
+	add_money(-total_price)
 	InventoryService.add_item(item_id, quantity)
 	_set_daily_purchase_count(shop_id, item_id, purchased_today + quantity)
 	var item = GameState.get_item_data(item_id)
@@ -135,10 +147,11 @@ func _set_daily_purchase_count(shop_id: String, item_id: String, value: int) -> 
 	shop_purchase_counts[shop_id][item_id] = value
 
 
-func _result(success: bool, message: String, time_cost: int = 0, events: Array = []) -> Dictionary:
+func _result(success: bool, message: String, time_cost: int = 0, events: Array = [], directives: Dictionary = {}) -> Dictionary:
 	return {
 		"success": success,
 		"message": message,
 		"time_cost": time_cost,
-		"events": events
+		"events": events,
+		"directives": directives
 	}

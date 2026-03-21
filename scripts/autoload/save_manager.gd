@@ -12,7 +12,7 @@ func has_save() -> bool:
 
 
 func save_game() -> bool:
-	var payload: Dictionary = save_codec.encode_state(GameState.build_save_payload())
+	var payload: Dictionary = build_save_snapshot()
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if file == null:
 		return false
@@ -31,5 +31,27 @@ func load_game() -> bool:
 	if parse_result != OK:
 		return false
 	var payload: Dictionary = save_codec.decode_state(json.data)
-	GameState.apply_save_payload(payload)
+	apply_save_snapshot(payload)
 	return true
+
+
+func build_save_snapshot() -> Dictionary:
+	return save_codec.encode_state({
+		"save_version": GameState.CURRENT_SAVE_VERSION,
+		"clock": ClockService.build_save_data(),
+		"inventory": InventoryService.build_save_data(),
+		"world": WorldState.build_save_data(),
+		"economy": EconomyService.build_save_data(),
+		"quests": QuestService.build_save_data(),
+		"scene_router": {"current_map_id": SceneRouter.current_map_id}
+	})
+
+
+func apply_save_snapshot(payload: Dictionary) -> void:
+	ClockService.load_state(payload.get("clock", {}))
+	InventoryService.load_state(payload.get("inventory", {}))
+	WorldState.load_state(payload.get("world", {}))
+	EconomyService.load_state(payload.get("economy", {}))
+	NpcService.load_state(payload.get("npcs", {}))
+	QuestService.load_state(payload.get("quests", {}))
+	SceneRouter.set_current_map(String(payload.get("scene_router", {}).get("current_map_id", "farm")))

@@ -1,7 +1,6 @@
 extends "res://scripts/world/interactable.gd"
 
 var npc_id := ""
-var current_map = null
 
 @onready var body: Polygon2D = $Body
 @onready var name_label: Label = $NameLabel
@@ -9,7 +8,6 @@ var current_map = null
 
 func setup_projection(projection: Dictionary, map_scene: Node) -> void:
 	npc_id = String(projection.get("npc_id", ""))
-	current_map = map_scene
 	var state: Dictionary = projection.get("state", {})
 	position = map_scene.cell_to_world(Vector2i(int(state.get("cell", {}).get("x", 0)), int(state.get("cell", {}).get("y", 0))))
 	prompt = "Talk to %s" % String(projection.get("display_name", npc_id))
@@ -28,10 +26,5 @@ func _refresh_visuals(projection: Dictionary) -> void:
 	else:
 		body.color = Color("7db0d4")
 
-
-func interact(_player: Node, hud: Node) -> void:
-	var result := NpcService.interact_with_npc(npc_id)
-	if hud != null:
-		hud.push_message(String(result.get("message", "")))
-		if result.get("open_shop", false):
-			hud.open_shop(String(result.get("shop_id", "")), npc_id)
+func build_action_request() -> Dictionary:
+	return {"type": "npc_interaction", "npc_id": npc_id}

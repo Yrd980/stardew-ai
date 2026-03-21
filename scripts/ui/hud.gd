@@ -21,8 +21,8 @@ func _ready() -> void:
 	shop_panel.visible = false
 	if not ClockService.clock_changed.is_connected(_on_runtime_changed):
 		ClockService.clock_changed.connect(_on_runtime_changed)
-	if not GameState.money_changed.is_connected(_on_money_changed):
-		GameState.money_changed.connect(_on_money_changed)
+	if not EconomyService.money_changed.is_connected(_on_money_changed):
+		EconomyService.money_changed.connect(_on_money_changed)
 	if not InventoryService.inventory_changed.is_connected(_on_inventory_changed):
 		InventoryService.inventory_changed.connect(_on_inventory_changed)
 	if not InventoryService.selection_changed.is_connected(_on_selection_changed):
@@ -33,6 +33,12 @@ func _ready() -> void:
 		QuestService.quest_log_changed.connect(_on_quest_changed)
 	if not EconomyService.pending_shipments_changed.is_connected(_on_shipments_changed):
 		EconomyService.pending_shipments_changed.connect(_on_shipments_changed)
+	if not ActionCoordinator.message_requested.is_connected(push_message):
+		ActionCoordinator.message_requested.connect(push_message)
+	if not ActionCoordinator.shop_requested.is_connected(open_shop):
+		ActionCoordinator.shop_requested.connect(open_shop)
+	if not ActionCoordinator.shop_close_requested.is_connected(close_shop):
+		ActionCoordinator.shop_close_requested.connect(close_shop)
 	_refresh_all()
 
 
@@ -105,7 +111,7 @@ func _refresh_status() -> void:
 	status_label.text = "Day %s  %s  Money %sg  Map %s" % [
 		ClockService.day,
 		GameState.format_time(ClockService.time_minutes),
-		GameState.money,
+		EconomyService.money,
 		SceneRouter.current_map_id.capitalize()
 	]
 
@@ -181,7 +187,7 @@ func _refresh_shop() -> void:
 			remaining_text
 		])
 	lines.append("")
-	lines.append("Money: %sg" % GameState.money)
+	lines.append("Money: %sg" % EconomyService.money)
 	lines.append("Press 1-%s to buy one item." % min(GameState.HOTBAR_SLOTS, shop.stock.size()))
 	shop_label.text = "\n".join(lines)
 
@@ -193,10 +199,7 @@ func _buy_shop_index(index: int) -> void:
 	if index < 0 or index >= shop.stock.size():
 		return
 	var entry: Dictionary = shop.stock[index]
-	var result := EconomyService.purchase_item(active_shop_id, String(entry.get("item_id", "")), 1)
-	if result.get("success", false):
-		ClockService.advance_time(int(result.get("time_cost", 0)))
-	push_message(String(result.get("message", "")))
+	ActionCoordinator.purchase_shop_item(active_shop_id, String(entry.get("item_id", "")), 1, active_shopkeeper_id)
 	_refresh_all()
 
 

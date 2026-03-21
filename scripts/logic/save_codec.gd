@@ -15,12 +15,13 @@ func decode_state(payload: Dictionary) -> Dictionary:
 	decoded["save_version"] = save_version
 	if not decoded.has("economy"):
 		decoded["economy"] = {
+			"money": 250,
 			"pending_shipments": [],
 			"shop_purchase_counts": {},
 			"last_settlement_summary": {}
 		}
-	if not decoded.has("npcs"):
-		decoded["npcs"] = {"npc_states": {}}
+	elif not decoded["economy"].has("money"):
+		decoded["economy"]["money"] = 250
 	if not decoded.has("quests"):
 		decoded["quests"] = {
 			"active_quests": [],

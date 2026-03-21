@@ -18,12 +18,11 @@ func reset_state() -> void:
 
 
 func load_state(payload: Dictionary) -> void:
-	npc_states = payload.get("npc_states", {}).duplicate(true)
 	refresh_states()
 
 
 func build_save_data() -> Dictionary:
-	return {"npc_states": npc_states.duplicate(true)}
+	return {}
 
 
 func refresh_states() -> void:
@@ -95,19 +94,24 @@ func is_shop_open(shop_id: String, npc_id: String = "") -> bool:
 func interact_with_npc(npc_id: String) -> Dictionary:
 	var npc = GameState.get_npc_data(npc_id)
 	if npc == null:
-		return {"success": false, "message": "Nobody is here.", "time_cost": 0, "events": [], "open_shop": false, "shop_id": ""}
+		return _result(false, "Nobody is here.")
 	var quest_result := QuestService.handle_npc_interaction(npc_id)
 	var state := get_npc_state(npc_id)
 	var interaction_mode := String(state.get("interaction_mode", "talk"))
 	var open_shop := interaction_mode == "shop" and not String(npc.shop_id).is_empty()
-	return {
-		"success": true,
-		"message": String(quest_result.get("message", npc.default_dialogue if not String(npc.default_dialogue).is_empty() else "%s nods at you." % npc.display_name)),
-		"time_cost": 0,
-		"events": quest_result.get("events", []),
-		"open_shop": open_shop,
-		"shop_id": String(npc.shop_id)
-	}
+	var directives := {}
+	if open_shop:
+		directives["open_shop"] = {
+			"shop_id": String(npc.shop_id),
+			"npc_id": npc_id
+		}
+	return _result(
+		true,
+		String(quest_result.get("message", npc.default_dialogue if not String(npc.default_dialogue).is_empty() else "%s nods at you." % npc.display_name)),
+		0,
+		quest_result.get("events", []),
+		directives
+	)
 
 
 func _find_active_entry_index(entries: Array, time_minutes: int) -> int:
@@ -125,6 +129,16 @@ func _normalize_cell(value) -> Dictionary:
 	if value is Dictionary:
 		return {"x": int(value.get("x", 0)), "y": int(value.get("y", 0))}
 	return {"x": 0, "y": 0}
+
+
+func _result(success: bool, message: String, time_cost: int = 0, events: Array = [], directives: Dictionary = {}) -> Dictionary:
+	return {
+		"success": success,
+		"message": message,
+		"time_cost": time_cost,
+		"events": events,
+		"directives": directives
+	}
 
 
 func _on_clock_changed(_day: int, _time_minutes: int) -> void:

@@ -5,14 +5,12 @@ const CropLogicScript = preload("res://scripts/logic/crop_logic.gd")
 signal world_changed(map_id: String)
 
 var crop_logic = CropLogicScript.new()
-var current_map_id := "farm"
 var player_positions := {}
 var soils_by_map := {}
 var crops_by_map := {}
 
 
 func reset_world() -> void:
-	current_map_id = "farm"
 	player_positions = {}
 	soils_by_map = {}
 	crops_by_map = {}
@@ -20,7 +18,6 @@ func reset_world() -> void:
 
 
 func load_state(payload: Dictionary) -> void:
-	current_map_id = String(payload.get("current_map_id", "farm"))
 	player_positions = payload.get("player_positions", {}).duplicate(true)
 	soils_by_map = payload.get("soils_by_map", {}).duplicate(true)
 	crops_by_map = payload.get("crops_by_map", {}).duplicate(true)
@@ -32,7 +29,6 @@ func load_state(payload: Dictionary) -> void:
 
 func build_save_data() -> Dictionary:
 	return {
-		"current_map_id": current_map_id,
 		"player_positions": player_positions.duplicate(true),
 		"soils_by_map": soils_by_map.duplicate(true),
 		"crops_by_map": crops_by_map.duplicate(true)

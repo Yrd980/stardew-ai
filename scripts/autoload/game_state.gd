@@ -1,7 +1,5 @@
 extends Node
 
-signal money_changed(amount: int)
-
 const INVENTORY_SLOTS := 12
 const HOTBAR_SLOTS := 8
 const STARTING_MONEY := 250
@@ -21,7 +19,6 @@ var npc_defs := {}
 var schedule_defs := {}
 var shop_defs := {}
 var quest_defs := {}
-var money := STARTING_MONEY
 
 
 func _ready() -> void:
@@ -90,8 +87,6 @@ func _load_resources(dir_path: String) -> Dictionary:
 
 
 func start_new_game() -> void:
-	money = STARTING_MONEY
-	money_changed.emit(money)
 	ClockService.reset_clock()
 	InventoryService.reset_inventory(INVENTORY_SLOTS)
 	InventoryService.add_item("hoe", 1)
@@ -101,40 +96,8 @@ func start_new_game() -> void:
 	EconomyService.reset_state()
 	NpcService.reset_state()
 	QuestService.reset_state()
-	WorldState.current_map_id = "farm"
 	WorldState.set_player_position("farm", Vector2(160, 208))
 	SceneRouter.set_current_map("farm")
-
-
-func build_save_payload() -> Dictionary:
-	return {
-		"save_version": CURRENT_SAVE_VERSION,
-		"money": money,
-		"clock": ClockService.build_save_data(),
-		"inventory": InventoryService.build_save_data(),
-		"world": WorldState.build_save_data(),
-		"economy": EconomyService.build_save_data(),
-		"npcs": NpcService.build_save_data(),
-		"quests": QuestService.build_save_data(),
-		"scene_router": {"current_map_id": SceneRouter.current_map_id}
-	}
-
-
-func apply_save_payload(payload: Dictionary) -> void:
-	money = int(payload.get("money", STARTING_MONEY))
-	money_changed.emit(money)
-	ClockService.load_state(payload.get("clock", {}))
-	InventoryService.load_state(payload.get("inventory", {}))
-	WorldState.load_state(payload.get("world", {}))
-	EconomyService.load_state(payload.get("economy", {}))
-	NpcService.load_state(payload.get("npcs", {}))
-	QuestService.load_state(payload.get("quests", {}))
-	SceneRouter.set_current_map(String(payload.get("scene_router", {}).get("current_map_id", WorldState.current_map_id)))
-
-
-func add_money(amount: int) -> void:
-	money += amount
-	money_changed.emit(money)
 
 
 func get_item_data(item_id: String):

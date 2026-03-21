@@ -18,7 +18,6 @@ const NpcProjectionScene = preload("res://scenes/entities/npc_projection.tscn")
 
 var npcs_root: Node2D
 
-var hud: Node
 var crop_logic = CropLogicScript.new()
 
 
@@ -41,11 +40,6 @@ func _exit_tree() -> void:
 		WorldState.world_changed.disconnect(_on_world_changed)
 	if NpcService.npc_states_changed.is_connected(_on_npc_states_changed):
 		NpcService.npc_states_changed.disconnect(_on_npc_states_changed)
-
-
-func bind_hud(target: Node) -> void:
-	hud = target
-
 
 func get_spawn_position(spawn_id: String) -> Vector2:
 	if spawn_points.has_node(spawn_id):

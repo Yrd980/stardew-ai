@@ -54,9 +54,7 @@ func _handle_action_input() -> void:
 	if Input.is_action_just_pressed("toggle_inventory") and hud != null:
 		hud.toggle_inventory()
 	if Input.is_action_just_pressed("save_game"):
-		WorldState.set_player_position(SceneRouter.current_map_id, global_position)
-		if SaveManager.save_game() and hud != null:
-			hud.push_message("Game saved to user://savegame.json")
+		ActionCoordinator.save_game(SceneRouter.current_map_id, global_position)
 	if Input.is_action_just_pressed("use_tool"):
 		_use_selected_slot()
 	if Input.is_action_just_pressed("interact"):
@@ -66,76 +64,14 @@ func _handle_action_input() -> void:
 func _use_selected_slot() -> void:
 	if current_map == null:
 		return
-	var slot := InventoryService.get_selected_slot()
-	var item_id := String(slot.get("item_id", ""))
-	if item_id.is_empty():
-		if hud != null:
-			hud.push_message("Select a tool or seeds from the hotbar.")
-		return
-	var item = GameState.get_item_data(item_id)
-	if item == null:
-		return
 	var target_cell := get_target_cell()
-	match item.kind:
-		"tool":
-			_use_tool(item_id, target_cell)
-		"seed":
-			_plant_seed(item_id, target_cell)
-		_:
-			if hud != null:
-				hud.push_message("That item is for inventory or shipping.")
-
-
-func _use_tool(tool_id: String, cell: Vector2i) -> void:
-	if current_map == null:
-		return
-	if not current_map.can_farm_cell(cell):
-		if hud != null:
-			hud.push_message("That tile is not part of your field.")
-		return
-	var tool = GameState.get_tool_data(tool_id)
-	if tool == null:
-		return
-	var result := {}
-	match tool.action_kind:
-		"till":
-			result = FarmService.till_cell(current_map.map_id, cell)
-		"water":
-			result = FarmService.water_cell(current_map.map_id, cell)
-	_apply_action_result(result)
-
-
-func _plant_seed(item_id: String, cell: Vector2i) -> void:
-	if current_map == null:
-		return
-	if not current_map.can_farm_cell(cell):
-		if hud != null:
-			hud.push_message("Seeds only grow in the farm plot.")
-		return
-	_apply_action_result(FarmService.plant_seed(current_map.map_id, cell, item_id))
+	ActionCoordinator.use_selected_slot(current_map.map_id, target_cell, current_map.can_farm_cell(target_cell))
 
 
 func _interact() -> void:
 	if current_map == null:
 		return
 	var target_cell := get_target_cell()
-	if WorldState.can_harvest(current_map.map_id, target_cell):
-		var harvest_result := FarmService.harvest_crop(current_map.map_id, target_cell)
-		_apply_action_result(harvest_result)
-		if harvest_result.get("success", false):
-			return
 	var target_world := global_position + facing * TilePalette.TILE_SIZE
 	var interactable = current_map.find_interactable(target_world, global_position)
-	if interactable != null:
-		interactable.interact(self, hud)
-	elif hud != null:
-		hud.push_message("Nothing to interact with here.")
-
-
-func _apply_action_result(result: Dictionary) -> void:
-	if result.is_empty():
-		return
-	if int(result.get("time_cost", 0)) > 0 and result.get("success", false):
-		ClockService.advance_time(int(result.get("time_cost", 0)))
-	if hud != null:
-		hud.push_message(String(result.get("message", "")))
+	ActionCoordinator.interact_at_target(current_map.map_id, target_cell, interactable)

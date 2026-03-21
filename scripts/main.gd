@@ -38,10 +38,8 @@ func _load_map(map_id: String, spawn_id: String) -> void:
 		current_map.queue_free()
 	current_map = load(MAP_SCENES[map_id]).instantiate()
 	map_root.add_child(current_map)
-	current_map.bind_hud(hud)
 	player.current_map = current_map
 	SceneRouter.set_current_map(map_id)
-	WorldState.current_map_id = map_id
 	var spawn_position: Vector2 = current_map.get_spawn_position(spawn_id)
 	if spawn_id == "save" and WorldState.has_player_position(map_id):
 		spawn_position = WorldState.get_player_position(map_id, spawn_position)

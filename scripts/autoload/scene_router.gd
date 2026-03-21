@@ -12,6 +12,4 @@ func set_current_map(map_id: String) -> void:
 
 
 func request_map_change(map_id: String, spawn_id: String = "default") -> void:
-	current_map_id = map_id
-	current_map_changed.emit(map_id)
 	map_change_requested.emit(map_id, spawn_id)

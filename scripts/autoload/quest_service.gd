@@ -1,7 +1,6 @@
 extends Node
 
 signal quest_log_changed
-signal quest_message(message: String)
 
 var active_quests: Array[String] = []
 var completed_quests: Array[String] = []
@@ -138,7 +137,7 @@ func _complete_quest(quest_id: String) -> String:
 func _grant_rewards(rewards: Array) -> void:
 	for reward in rewards:
 		if reward.has("money"):
-			GameState.add_money(int(reward.get("money", 0)))
+			EconomyService.add_money(int(reward.get("money", 0)))
 		elif reward.has("item_id"):
 			var item_id := String(reward.get("item_id", ""))
 			var count := int(reward.get("count", 1))
