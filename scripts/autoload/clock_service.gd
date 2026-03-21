@@ -53,10 +53,14 @@ func advance_time(minutes: int) -> void:
 	clock_changed.emit(day, time_minutes)
 
 
-func sleep_and_advance_day() -> void:
+func sleep_and_advance_day() -> Dictionary:
+	var settlement := EconomyService.settle_pending_shipments()
 	day += 1
 	time_minutes = DAY_START_MINUTES
 	WorldState.process_new_day(GameState.crop_defs)
 	clock_changed.emit(day, time_minutes)
 	day_advanced.emit(day)
-
+	var message := "You slept well. Day %s begins." % day
+	if int(settlement.get("total_earned", 0)) > 0:
+		message = "You slept well. Day %s begins. Shipping paid %sg." % [day, int(settlement.get("total_earned", 0))]
+	return {"success": true, "message": message, "settlement": settlement}

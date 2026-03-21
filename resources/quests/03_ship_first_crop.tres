@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="QuestData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/quest_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "03_ship_first_crop"
+title = "Ship Your First Crop"
+description = "Get one parsnip sold through the shipping bin."
+giver_npc_id = "merchant"
+prerequisite_ids = Array[String](["02_buy_first_seeds"])
+steps = [{
+"event_type": "shipment_settled",
+"target_id": "parsnip",
+"required_count": 1
+}]
+rewards = [{
+"money": 100
+}]

@@ -21,9 +21,13 @@ func _build_static_map() -> void:
 	_paint_rect(ground_layer, Rect2i(Vector2i.ZERO, map_size), TilePalette.GRASS)
 	_paint_rect(ground_layer, Rect2i(8, 0, 4, map_size.y), TilePalette.PATH)
 	_paint_rect(ground_layer, Rect2i(9, 7, 3, 7), TilePalette.PATH)
+	_paint_rect(ground_layer, Rect2i(4, 6, 6, 3), TilePalette.PATH)
 	_paint_rect(ground_layer, FARMABLE_RECT, TilePalette.PATH)
+	_paint_rect(decoration_layer, Rect2i(2, 2, 6, 4), TilePalette.ROOF)
+	_paint_rect(collision_layer, Rect2i(2, 6, 6, 2), TilePalette.WALL)
 	_paint_rect(decoration_layer, Rect2i(19, 2, 7, 4), TilePalette.ROOF)
 	_paint_rect(collision_layer, Rect2i(19, 6, 7, 4), TilePalette.WALL)
+	collision_layer.set_cell(Vector2i(4, 7), TilePalette.SOURCE_ID, TilePalette.DOOR)
 	collision_layer.set_cell(Vector2i(22, 9), TilePalette.SOURCE_ID, TilePalette.DOOR)
 	decoration_layer.set_cell(Vector2i(7, 8), TilePalette.SOURCE_ID, TilePalette.BIN)
 	ground_layer.update_internals()
@@ -36,6 +40,7 @@ func _build_solids() -> void:
 	_spawn_static_rect("BottomBoundary", Rect2i(0, map_size.y, map_size.x, 1))
 	_spawn_static_rect("LeftBoundary", Rect2i(-1, 0, 1, map_size.y))
 	_spawn_static_rect("RightBoundary", Rect2i(map_size.x, 0, 1, map_size.y))
+	_spawn_static_rect("ShopBody", Rect2i(2, 2, 6, 6))
 	_spawn_static_rect("HouseBody", Rect2i(19, 2, 7, 8))
 
 
@@ -53,3 +58,11 @@ func _build_interactables() -> void:
 	shipping_bin.position = cell_to_world(Vector2i(7, 8))
 	shipping_bin.prompt = "Ship selected stack"
 	interactables_root.add_child(shipping_bin)
+
+	var to_shop := DoorInteractable.new()
+	to_shop.name = "ToShop"
+	to_shop.position = cell_to_world(Vector2i(4, 7))
+	to_shop.destination_map_id = "shop"
+	to_shop.destination_spawn_id = "from_farm"
+	to_shop.prompt = "Visit the seed shop"
+	interactables_root.add_child(to_shop)

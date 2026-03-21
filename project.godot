@@ -17,6 +17,10 @@ ClockService="*res://scripts/autoload/clock_service.gd"
 InventoryService="*res://scripts/autoload/inventory_service.gd"
 WorldState="*res://scripts/autoload/world_state.gd"
 SaveManager="*res://scripts/autoload/save_manager.gd"
+FarmService="*res://scripts/autoload/farm_service.gd"
+EconomyService="*res://scripts/autoload/economy_service.gd"
+NpcService="*res://scripts/autoload/npc_service.gd"
+QuestService="*res://scripts/autoload/quest_service.gd"
 
 [display]
 
@@ -31,4 +35,3 @@ textures/canvas_textures/default_texture_filter=0
 textures/canvas_textures/default_texture_repeat=0
 2d/snap/snap_2d_vertices_to_pixel=true
 2d/snap/snap_2d_transforms_to_pixel=true
-

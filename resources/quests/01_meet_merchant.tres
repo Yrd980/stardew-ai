@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="QuestData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/quest_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "01_meet_merchant"
+title = "Meet Mae"
+description = "Find the local seed merchant and introduce yourself."
+giver_npc_id = "merchant"
+prerequisite_ids = Array[String]([])
+steps = [{
+"event_type": "npc_talked_to",
+"target_id": "merchant",
+"required_count": 1
+}]
+rewards = [{
+"money": 25
+}]

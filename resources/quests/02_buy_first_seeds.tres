@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="QuestData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/quest_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "02_buy_first_seeds"
+title = "Buy Fresh Seeds"
+description = "Buy 5 parsnip seeds from Mae."
+giver_npc_id = "merchant"
+prerequisite_ids = Array[String](["01_meet_merchant"])
+steps = [{
+"event_type": "shop_purchase_completed",
+"target_id": "parsnip_seeds",
+"required_count": 5
+}]
+rewards = [{
+"money": 15
+}]

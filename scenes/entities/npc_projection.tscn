@@ -1,0 +1,19 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/entities/npc_projection.gd" id="1"]
+
+[node name="NpcProjection" type="Node2D"]
+script = ExtResource("1")
+radius = 20.0
+
+[node name="Body" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-5, -7, 5, -7, 6, 5, 0, 8, -6, 5)
+color = Color(0.490196, 0.690196, 0.831373, 1)
+
+[node name="NameLabel" type="Label" parent="."]
+offset_left = -28.0
+offset_top = -24.0
+offset_right = 28.0
+offset_bottom = -8.0
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 10

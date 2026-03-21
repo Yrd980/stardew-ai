@@ -1,11 +1,11 @@
 [gd_scene load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://scripts/maps/farm_map.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/maps/shop_map.gd" id="1"]
 
-[node name="FarmMap" type="Node2D"]
+[node name="ShopMap" type="Node2D"]
 script = ExtResource("1")
-map_id = "farm"
-map_size = Vector2i(32, 24)
+map_id = "shop"
+map_size = Vector2i(14, 12)
 
 [node name="GroundLayer" type="TileMapLayer" parent="."]
 
@@ -24,10 +24,7 @@ map_size = Vector2i(32, 24)
 [node name="SpawnPoints" type="Node2D" parent="."]
 
 [node name="default" type="Marker2D" parent="SpawnPoints"]
-position = Vector2(160, 208)
+position = Vector2(104, 152)
 
-[node name="from_house" type="Marker2D" parent="SpawnPoints"]
-position = Vector2(360, 176)
-
-[node name="from_shop" type="Marker2D" parent="SpawnPoints"]
-position = Vector2(72, 144)
+[node name="from_farm" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(104, 152)

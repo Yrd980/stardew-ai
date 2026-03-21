@@ -30,6 +30,14 @@ func build_save_data() -> Dictionary:
 	return {"slots": slots.duplicate(true), "selected_index": selected_index}
 
 
+func can_add_item(item_id: String, amount: int) -> bool:
+	var item = GameState.get_item_data(item_id)
+	if item == null:
+		return false
+	var result: Dictionary = inventory_logic.add_item(slots, item_id, amount, item.max_stack)
+	return int(result["leftover"]) == 0
+
+
 func get_selected_slot() -> Dictionary:
 	return slots[selected_index]
 

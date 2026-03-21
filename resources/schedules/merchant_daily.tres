@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ScheduleData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/schedule_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "merchant_daily"
+npc_id = "merchant"
+entries = [{
+"start_minutes": 360,
+"map_id": "farm",
+"cell": {"x": 6, "y": 8},
+"facing": "down",
+"behavior": "shop"
+}, {
+"start_minutes": 570,
+"map_id": "shop",
+"cell": {"x": 6, "y": 5},
+"facing": "down",
+"behavior": "shop"
+}, {
+"start_minutes": 1080,
+"map_id": "shop",
+"cell": {"x": 6, "y": 5},
+"facing": "down",
+"behavior": "talk"
+}]

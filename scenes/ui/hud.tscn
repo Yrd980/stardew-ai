@@ -16,7 +16,7 @@ layout_mode = 0
 offset_left = 16.0
 offset_top = 16.0
 offset_right = 520.0
-offset_bottom = 86.0
+offset_bottom = 118.0
 
 [node name="StatusLabel" type="Label" parent="TopBar"]
 layout_mode = 0
@@ -33,6 +33,15 @@ offset_top = 38.0
 offset_right = 488.0
 offset_bottom = 62.0
 text = "Help"
+
+[node name="QuestLabel" type="Label" parent="TopBar"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 66.0
+offset_right = 488.0
+offset_bottom = 94.0
+autowrap_mode = 2
+text = "Quest"
 
 [node name="BottomBar" type="PanelContainer" parent="."]
 layout_mode = 0
@@ -73,3 +82,19 @@ offset_right = 236.0
 offset_bottom = 392.0
 text = "Inventory"
 
+[node name="ShopPanel" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 912.0
+offset_top = 440.0
+offset_right = 1264.0
+offset_bottom = 704.0
+
+[node name="ShopLabel" type="Label" parent="ShopPanel"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 10.0
+offset_right = 332.0
+offset_bottom = 244.0
+autowrap_mode = 2
+text = "Shop"

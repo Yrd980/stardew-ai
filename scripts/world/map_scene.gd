@@ -2,6 +2,7 @@ extends Node2D
 
 const TilePalette = preload("res://scripts/world/tile_palette.gd")
 const CropLogicScript = preload("res://scripts/logic/crop_logic.gd")
+const NpcProjectionScene = preload("res://scenes/entities/npc_projection.tscn")
 
 @export var map_id := ""
 @export var map_size := Vector2i(16, 12)
@@ -15,6 +16,8 @@ const CropLogicScript = preload("res://scripts/logic/crop_logic.gd")
 @onready var interactables_root: Node2D = $Interactables
 @onready var spawn_points: Node2D = $SpawnPoints
 
+var npcs_root: Node2D
+
 var hud: Node
 var crop_logic = CropLogicScript.new()
 
@@ -27,12 +30,17 @@ func _ready() -> void:
 	_build_solids()
 	_build_interactables()
 	refresh_dynamic_layers()
+	_ensure_npcs_root()
+	refresh_npc_projections()
 	WorldState.world_changed.connect(_on_world_changed)
+	NpcService.npc_states_changed.connect(_on_npc_states_changed)
 
 
 func _exit_tree() -> void:
 	if WorldState.world_changed.is_connected(_on_world_changed):
 		WorldState.world_changed.disconnect(_on_world_changed)
+	if NpcService.npc_states_changed.is_connected(_on_npc_states_changed):
+		NpcService.npc_states_changed.disconnect(_on_npc_states_changed)
 
 
 func bind_hud(target: Node) -> void:
@@ -66,7 +74,11 @@ func can_farm_cell(_cell: Vector2i) -> bool:
 func find_interactable(target_world: Vector2, actor_world: Vector2):
 	var best = null
 	var best_distance := INF
-	for child in interactables_root.get_children():
+	var candidates: Array = []
+	candidates.append_array(interactables_root.get_children())
+	if npcs_root != null:
+		candidates.append_array(npcs_root.get_children())
+	for child in candidates:
 		if child.has_method("can_be_interacted_with") and child.can_be_interacted_with(target_world, actor_world):
 			var distance: float = child.global_position.distance_to(target_world)
 			if distance < best_distance:
@@ -101,6 +113,30 @@ func refresh_dynamic_layers() -> void:
 func _on_world_changed(changed_map_id: String) -> void:
 	if changed_map_id == map_id:
 		refresh_dynamic_layers()
+
+
+func refresh_npc_projections() -> void:
+	if npcs_root == null:
+		return
+	for child in npcs_root.get_children():
+		child.queue_free()
+	for projection in NpcService.get_npcs_for_map(map_id):
+		var npc_node = NpcProjectionScene.instantiate()
+		npc_node.setup_projection(projection, self)
+		npcs_root.add_child(npc_node)
+
+
+func _ensure_npcs_root() -> void:
+	if has_node("NPCs"):
+		npcs_root = $NPCs
+		return
+	npcs_root = Node2D.new()
+	npcs_root.name = "NPCs"
+	add_child(npcs_root)
+
+
+func _on_npc_states_changed() -> void:
+	refresh_npc_projections()
 
 
 func _paint_rect(layer: TileMapLayer, rect: Rect2i, atlas_coords: Vector2i) -> void:

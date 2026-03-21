@@ -2,7 +2,8 @@ extends Node2D
 
 const MAP_SCENES := {
 	"farm": "res://scenes/maps/farm_map.tscn",
-	"house": "res://scenes/maps/house_map.tscn"
+	"house": "res://scenes/maps/house_map.tscn",
+	"shop": "res://scenes/maps/shop_map.tscn"
 }
 
 @onready var map_root: Node2D = $MapRoot
@@ -19,7 +20,7 @@ func _ready() -> void:
 		GameState.start_new_game()
 	var spawn_id := "save" if SaveManager.has_save() else "default"
 	_load_map(SceneRouter.current_map_id, spawn_id)
-	hud.push_message("Farm loop ready: till, water, plant, sleep, harvest, ship.")
+	hud.push_message("Farm loop ready: till, water, plant, talk, shop, ship.")
 
 
 func _exit_tree() -> void:
@@ -45,3 +46,5 @@ func _load_map(map_id: String, spawn_id: String) -> void:
 	if spawn_id == "save" and WorldState.has_player_position(map_id):
 		spawn_position = WorldState.get_player_position(map_id, spawn_position)
 	player.global_position = spawn_position
+	if hud != null:
+		hud.push_message(current_map.get_enter_message())

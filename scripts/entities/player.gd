@@ -16,6 +16,10 @@ func _ready() -> void:
 
 
 func _physics_process(_delta: float) -> void:
+	if hud != null and hud.has_method("is_modal_open") and hud.is_modal_open():
+		hud.handle_modal_input()
+		velocity = Vector2.ZERO
+		return
 	_handle_selection_input()
 	_handle_action_input()
 	var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
@@ -76,7 +80,7 @@ func _use_selected_slot() -> void:
 		"tool":
 			_use_tool(item_id, target_cell)
 		"seed":
-			_plant_seed(item, target_cell)
+			_plant_seed(item_id, target_cell)
 		_:
 			if hud != null:
 				hud.push_message("That item is for inventory or shipping.")
@@ -92,37 +96,23 @@ func _use_tool(tool_id: String, cell: Vector2i) -> void:
 	var tool = GameState.get_tool_data(tool_id)
 	if tool == null:
 		return
+	var result := {}
 	match tool.action_kind:
 		"till":
-			if WorldState.till_cell(current_map.map_id, cell):
-				ClockService.advance_time(5)
-				if hud != null:
-					hud.push_message("Soil tilled.")
-			elif hud != null:
-				hud.push_message("That soil is already prepared.")
+			result = FarmService.till_cell(current_map.map_id, cell)
 		"water":
-			if WorldState.water_cell(current_map.map_id, cell):
-				ClockService.advance_time(5)
-				if hud != null:
-					hud.push_message("Soil watered for the day.")
-			elif hud != null:
-				hud.push_message("There is nothing new to water there.")
+			result = FarmService.water_cell(current_map.map_id, cell)
+	_apply_action_result(result)
 
 
-func _plant_seed(item, cell: Vector2i) -> void:
+func _plant_seed(item_id: String, cell: Vector2i) -> void:
 	if current_map == null:
 		return
 	if not current_map.can_farm_cell(cell):
 		if hud != null:
 			hud.push_message("Seeds only grow in the farm plot.")
 		return
-	if WorldState.plant_crop(current_map.map_id, cell, item.crop_id):
-		InventoryService.consume_selected_item(1)
-		ClockService.advance_time(5)
-		if hud != null:
-			hud.push_message("Planted %s." % item.display_name)
-	elif hud != null:
-		hud.push_message("You need empty tilled soil for that.")
+	_apply_action_result(FarmService.plant_seed(current_map.map_id, cell, item_id))
 
 
 func _interact() -> void:
@@ -130,12 +120,9 @@ func _interact() -> void:
 		return
 	var target_cell := get_target_cell()
 	if WorldState.can_harvest(current_map.map_id, target_cell):
-		var harvest_item := WorldState.harvest_crop(current_map.map_id, target_cell)
-		if not harvest_item.is_empty():
-			InventoryService.add_item(harvest_item, 1)
-			ClockService.advance_time(5)
-			if hud != null:
-				hud.push_message("Harvested %s." % GameState.get_item_data(harvest_item).display_name)
+		var harvest_result := FarmService.harvest_crop(current_map.map_id, target_cell)
+		_apply_action_result(harvest_result)
+		if harvest_result.get("success", false):
 			return
 	var target_world := global_position + facing * TilePalette.TILE_SIZE
 	var interactable = current_map.find_interactable(target_world, global_position)
@@ -143,3 +130,12 @@ func _interact() -> void:
 		interactable.interact(self, hud)
 	elif hud != null:
 		hud.push_message("Nothing to interact with here.")
+
+
+func _apply_action_result(result: Dictionary) -> void:
+	if result.is_empty():
+		return
+	if int(result.get("time_cost", 0)) > 0 and result.get("success", false):
+		ClockService.advance_time(int(result.get("time_cost", 0)))
+	if hud != null:
+		hud.push_message(String(result.get("message", "")))
