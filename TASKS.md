@@ -32,6 +32,7 @@
 - [ ] Broaden command coverage from the current player loop into more map traversal, farming, and progression scenarios as they ship
 - [ ] Tighten snapshot normalization where OpenClaw needs more stable IDs or richer world detail
 - [ ] Add higher-signal bridge events for downstream orchestration instead of only per-command result files
+- [ ] Decide whether command results should eventually lift snapshot/room_directory payloads out of `directives` into a more explicit transport contract
 - [ ] Decide when to prune the older human-oriented entry path completely after the OpenClaw runtime has enough operator confidence
 
 ## Phase 1: Farming And Economy Depth

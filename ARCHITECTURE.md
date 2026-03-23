@@ -130,6 +130,8 @@ Feature-specific fields are acceptable when the caller genuinely needs them, but
 
 OpenClaw-facing command results reuse the same shape and attach command metadata plus semantic fields such as `applied_steps`, `cell`, `snapshot`, or `room_directory` in `directives` when needed.
 
+The current movement contract is partial-progress rather than all-or-nothing: the runtime advances step by step until blocked, then returns the final reachable state and applied progress.
+
 ## OpenClaw Bridge
 
 The player-only bridge is a filesystem mailbox under `user://openclaw_bridge/`.
@@ -141,6 +143,8 @@ The player-only bridge is a filesystem mailbox under `user://openclaw_bridge/`.
 - `events.jsonl`: append-only result stream
 
 V1 does not expose generic UI index commands. The supported command families are semantic player actions such as movement, tools, planting, harvesting, talking, buying, shipping, crafting, delivery claims, container mutations, and save.
+
+V1 also keeps NPC control out of the bridge on purpose. NPCs remain fixed schedule-driven service projections, and the bridge may query or talk to them but does not own their runtime state.
 
 ## Architectural Constraints
 

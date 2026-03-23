@@ -59,6 +59,13 @@ V1 player commands:
 - `container_take {object_id, container_slot_index, amount}`
 - `save_game`
 
+Important command notes:
+
+- `actor_id` is currently always `player`
+- `move {direction, steps}` is partial-progress: it walks until blocked and reports applied progress in the result
+- `buy_item`, `sleep`, `craft_recipe`, `claim_delivery`, and container commands require the player to already be adjacent to the relevant NPC or static target
+- NPCs are visible in snapshots and room context, but they are not OpenClaw-controlled actors in v1
+
 ## Project Layout
 
 - `scenes/openclaw_runtime.tscn`: default OpenClaw runtime scene
@@ -113,6 +120,20 @@ The current baseline is verified through real runtime boot:
 
 Bridge verification can also use live mailbox commands while the headless runtime is running. The durable save truth remains:
 
+    /home/yrd/.local/share/godot/app_userdata/Stardew AI/savegame.json
+
+Minimal live verification loop:
+
+    godot --headless --path /home/yrd/projects/stardew-ai
+
+Then write command JSON files into:
+
+    /home/yrd/.local/share/godot/app_userdata/Stardew AI/openclaw_bridge/commands/
+
+And inspect:
+
+    /home/yrd/.local/share/godot/app_userdata/Stardew AI/openclaw_bridge/results/
+    /home/yrd/.local/share/godot/app_userdata/Stardew AI/openclaw_bridge/snapshot.json
     /home/yrd/.local/share/godot/app_userdata/Stardew AI/savegame.json
 
 ## Docs
