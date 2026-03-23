@@ -13,6 +13,15 @@ The repo currently reflects three implementation stages:
 
 The codebase should keep building on the service/resource structure rather than treating the repo as a blank farming prototype.
 
+## Target Shape
+
+The intended destination is a fuller Stardew-like life sim, but it should still grow out of the current service/resource architecture instead of collapsing back into scene-owned gameplay code.
+
+- farming remains the anchor loop, but expands into automation, crafting, quality, seasonality, and weather-aware planning
+- NPC systems expand from schedule projection into friendship, gifts, mail, richer quest chains, and event-day variation
+- world progression expands from farm/house/shop into authored destination maps and activity-specific services such as fishing and mining
+- long-tail progression eventually includes buildings, animals, cooking, festivals, and a town-level restoration or shared-goal arc
+
 ## Current Gameplay Slice
 
 - top-down movement across farm, house, and shop maps
@@ -42,6 +51,20 @@ Autoloads own long-lived runtime state and most gameplay orchestration.
 - `ActionCoordinator`: user-intent entrypoint that applies shared side effects like time, map changes, save triggers, messages, and shop directives
 - `UiSessionService`: inventory/shop session ownership so HUD stays a projection layer
 
+Planned next-wave services should extend this layer instead of pushing state back into map/player/UI scripts.
+
+- `StaminaService`: current stamina, max stamina, exhaustion state, and next-day recovery
+- `WeatherService`: current weather, next-day forecast, rainfall effects, and weather-driven day modifiers
+- `RelationshipService`: friendship points plus talked-today and gifted-today state
+- `MailService`: queued letters, attachments, unlock notifications, and claim state
+- `CraftingService`: recipe availability, crafting outputs, and placeable-object requests handed off into world state
+
+Later-phase services can stay dormant until needed, but the intended ownership is:
+
+- `FishingService` for catch tables, bite resolution, and fish rewards
+- `MiningService` for node durability, ore drops, and floor-level progression
+- `LivestockService` for animals, feed, affection, and barn/coop production
+
 ### Logic
 
 `scripts/logic/` is the functional core when possible.
@@ -60,6 +83,15 @@ Keep calculations here when they do not need live scene nodes or autoload state 
 - NPC definitions and schedules
 - shop stock data with progression gates
 - quest chain definitions for item-count and shipment-value milestones
+
+Planned resource surfaces should keep future gameplay data-driven:
+
+- recipe resources for crafting and cooking
+- dialogue, gift-taste, and mail resources for relationship progression
+- weather tables and seasonal crop/forage data
+- placeable object resources for chests, sprinklers, makers, and farm equipment
+- fishing tables, mine node data, and map-specific activity resources
+- building, animal, and festival/event resources once those systems exist
 
 Gameplay expansion should prefer new data resources over hardcoding content in scene or entity scripts.
 
@@ -86,6 +118,7 @@ These scripts should stay thin and projection-oriented.
 - `NpcService` derives runtime NPC projection state from schedule data and current time; that projection is not persisted
 - `EconomyService` owns money and other economy-facing save data
 - `UiSessionService` owns transient inventory/shop session state, not HUD widgets
+- future durable simulation state should follow the same pattern: one save section per long-lived service when a subsystem actually ships
 
 ### Communication
 
@@ -106,6 +139,13 @@ Gameplay actions should prefer the shared dictionary result shape:
     }
 
 Feature-specific fields are acceptable when the caller genuinely needs them, but the base result shape should stay recognizable across services. UI-facing follow-up like shop opening should route through `directives` rather than ad hoc top-level fields.
+
+Planned action families should also stay inside this contract shape:
+
+- crafting and object placement
+- gifting and mail interaction
+- fishing and mining actions
+- building, animal-care, and festival/event actions later
 
 ## Architectural Constraints
 
@@ -134,7 +174,7 @@ Feature-specific fields are acceptable when the caller genuinely needs them, but
 
 - placeholder visuals are still used throughout the project
 - the game is still a compact vertical slice even after adding more crops, progression gates, shipment-value progression, and a second quest-giver NPC
-- stamina, weather, seasons, and broader world simulation are not implemented yet
+- stamina, weather, calendar/seasonality, friendship, mail, crafting, fishing, mining, animals, festivals, and broader world simulation are not implemented yet
 
 ## Verified Commands
 

@@ -13,6 +13,16 @@ This repository currently ships a playable backend-first vertical slice with a b
 - quest chains tied to talking, buying seeds, harvesting produce, shipping crops, regrowing vines, and higher-value overnight shipments
 - save/load through `user://savegame.json`
 
+## Stardew Target
+
+The project goal is no longer just a farming prototype. The intended destination is a broader Stardew-like simulation with:
+
+- deeper farm management through upgrades, automation, storage, crafting, and produce quality
+- stronger NPC life-sim systems through friendship, gifting, mail, schedule variation, and repeatable town quests
+- day-to-day simulation pressure through stamina, weather, calendar flow, and seasonal crop rules
+- a larger world loop through town, forage, fishing, mining, and other authored destinations beyond the starter farm/shop slice
+- longer-tail progression through buildings, animals, cooking, house upgrades, festivals, and a town-scale restoration or shared-goal arc
+
 ## Controls
 
 - `WASD` or arrow keys: move
@@ -58,6 +68,14 @@ The current implementation is intentionally thin in presentation but structured 
 - Rowan's field-planning quest chain now continues past first regrowth into repeat-yield tomato work and premium melon deliveries
 - overnight shipping progress now tracks both item counts and higher-value settlement milestones
 
+## Planned Delivery Order
+
+- Phase 1: deepen farming and economy with storage, crafting, fertilizer, sprinklers, quality, and stronger money sinks
+- Phase 2: deepen NPC and social play with friendship, gifts, mail, richer dialogue, and bulletin-style quests
+- Phase 3: add stamina, weather, calendar, and seasonality so the day loop has real planning pressure
+- Phase 4: expand authored destinations and activity loops such as forage, fishing, and mining while keeping scenes thin
+- Phase 5: add long-tail Stardew systems such as animals, cooking, festivals, house upgrades, and town restoration
+
 ## Verification
 
 The current baseline is verified through real runtime boot:
@@ -74,6 +92,6 @@ The current baseline is verified through real runtime boot:
 
 ## Next Steps
 
-- keep growing the slice through `ActionCoordinator` instead of reintroducing gameplay flow into scene scripts
-- deepen progression with more economy milestones, authored quest chains, and additional content
-- expand into broader simulation systems like stamina, weather, and seasons only after the current runtime loop stays stable in real play
+- keep all future feature growth flowing through `ActionCoordinator` instead of reintroducing gameplay flow into scene scripts
+- use the current shipped slice as the baseline for farming/economy and social-system expansion rather than restarting the architecture
+- treat root docs as the authoritative roadmap: `README.md` for shipped status + goals, `ARCHITECTURE.md` for boundaries, and `TASKS.md` for ordered delivery

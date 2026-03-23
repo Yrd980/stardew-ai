@@ -23,9 +23,57 @@
 - [x] Keep docs aligned whenever service boundaries or gameplay claims change
 - [x] Treat real runtime boot as the verification boundary instead of repo-local tests
 
-## Next Expansion Work
+## Phase 1: Farming And Economy Depth
 
-- [ ] Add broader simulation systems like stamina, weather, and seasons
-- [ ] Expand authored maps once the current runtime loop stays stable in real play
-- [ ] Add more economy-facing sinks, unlocks, and long-tail progression after the current shipping loop is balanced
-- [ ] Keep new features flowing through `ActionCoordinator` so scene scripts stay projection-first
+- [ ] Add storage and placeable farm infrastructure such as chests and a minimal placeable-object path
+- [ ] Add crafting plus recipe unlock flow for farm equipment and progression items
+- [ ] Add fertilizer and crop-quality rules so farming outcomes vary by preparation
+- [ ] Add sprinklers or equivalent farm automation after manual crop care still works cleanly
+- [ ] Add stronger economy sinks such as tool upgrades, recipe/shop unlock costs, or service fees
+- [ ] Add delivery or claim flow for upgrades/rewards that should not appear instantly
+- [ ] Exit criteria: the player can grow, store, craft, improve, and reinvest instead of only buying seeds and shipping produce
+
+## Phase 2: NPC, Social, And Quest Depth
+
+- [ ] Add friendship points and daily conversation tracking
+- [ ] Add gift preferences and daily/weekly gift limits
+- [ ] Add dialogue pools that branch on friendship, quest progression, weather, and season
+- [ ] Add mail delivery for unlocks, thank-you notes, quest follow-ups, and upgrade notices
+- [ ] Add bulletin-style repeatable or rotating town quests beyond the authored mainline
+- [ ] Add schedule variants that can react to rain, season, or special event days
+- [ ] Exit criteria: NPCs feel like persistent residents rather than quest kiosks with one schedule each
+
+## Phase 3: Core Simulation Pressure
+
+- [ ] Add stamina and exhaustion with action costs, low-stamina feedback, and next-day recovery
+- [ ] Add day-of-week and calendar structure on top of the current day counter
+- [ ] Add seasons and crop seasonality, including out-of-season restrictions or wither rules
+- [ ] Add weather generation and tomorrow forecast with rain effects on watering and schedules
+- [ ] Add sleep/day-roll integration for stamina, weather, mail, and seasonal transitions in one place
+- [ ] Exit criteria: each day requires planning around energy, time, weather, and season rather than only money
+
+## Phase 4: World And Activity Expansion
+
+- [ ] Add authored non-farm destinations such as town, forest, beach, and mine-adjacent spaces
+- [ ] Add a forage loop with map-specific seasonal pickups
+- [ ] Add a fishing loop with location-aware catch tables and time/weather hooks
+- [ ] Add a mining loop with breakable nodes, ore progression, and reward pacing
+- [ ] Keep map scripts projection-thin by routing all new actions through `ActionCoordinator` and service-owned state
+- [ ] Exit criteria: the player has meaningful off-farm reasons to travel through multiple maps each day
+
+## Phase 5: Long-Tail Stardew Systems
+
+- [ ] Add buildings, barns/coops, and upgrade-driven farm layout progression
+- [ ] Add animals, feed/care flow, and animal-produced goods
+- [ ] Add cooking and kitchen progression tied to crops, fish, and animal outputs
+- [ ] Add house upgrades and interior progression
+- [ ] Add festivals, event days, or other calendar-driven special content
+- [ ] Add a town restoration, community-board, or other long-term meta-progression track
+- [ ] Exit criteria: the game has medium- and long-horizon goals beyond the first profitable crop loops
+
+## Verification Expectations
+
+- [ ] Keep using real runtime verification instead of repo-local tests unless the user explicitly changes that boundary
+- [ ] Re-run `godot --headless --path /home/yrd/projects/stardew-ai --quit` after each substantial backend phase
+- [ ] Re-run `timeout 5 godot --headless --path /home/yrd/projects/stardew-ai` after each substantial backend phase
+- [ ] Update `README.md` and `ARCHITECTURE.md` in the same change that shifts runtime boundaries or shipped behavior
