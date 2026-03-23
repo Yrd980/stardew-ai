@@ -107,6 +107,22 @@ func has_placeable(map_id: String, cell: Vector2i) -> bool:
 	return not get_placeable(map_id, cell).is_empty()
 
 
+func find_placeable_by_object_id(object_id: String) -> Dictionary:
+	for map_id_variant in placeables_by_map.keys():
+		var map_id := String(map_id_variant)
+		var placeables: Dictionary = placeables_by_map[map_id]
+		for key in placeables.keys():
+			var placeable_state: Dictionary = placeables[key]
+			if String(placeable_state.get("object_id", "")) != object_id:
+				continue
+			return {
+				"map_id": map_id,
+				"cell": placeable_state.get("cell", {}).duplicate(true),
+				"state": placeable_state.duplicate(true)
+			}
+	return {}
+
+
 func place_object(map_id: String, cell: Vector2i, placeable_id: String) -> Dictionary:
 	var placeable_def = GameState.get_placeable_data(placeable_id)
 	if placeable_def == null:

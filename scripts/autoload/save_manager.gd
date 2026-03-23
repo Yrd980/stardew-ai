@@ -41,11 +41,12 @@ func build_save_snapshot() -> Dictionary:
 		"clock": ClockService.build_save_data(),
 		"inventory": InventoryService.build_save_data(),
 		"world": WorldState.build_save_data(),
+		"actors": ActorService.build_save_data(),
 		"economy": EconomyService.build_save_data(),
 		"quests": QuestService.build_save_data(),
 		"crafting": CraftingService.build_save_data(),
 		"mail": MailService.build_save_data(),
-		"scene_router": {"current_map_id": SceneRouter.current_map_id}
+		"scene_router": {"current_map_id": ActorService.get_player_map_id()}
 	})
 
 
@@ -53,9 +54,10 @@ func apply_save_snapshot(payload: Dictionary) -> void:
 	ClockService.load_state(payload.get("clock", {}))
 	InventoryService.load_state(payload.get("inventory", {}))
 	WorldState.load_state(payload.get("world", {}))
+	ActorService.load_state(payload.get("actors", {}))
 	EconomyService.load_state(payload.get("economy", {}))
 	NpcService.load_state(payload.get("npcs", {}))
 	QuestService.load_state(payload.get("quests", {}))
 	CraftingService.load_state(payload.get("crafting", {}))
 	MailService.load_state(payload.get("mail", {}))
-	SceneRouter.set_current_map(String(payload.get("scene_router", {}).get("current_map_id", "farm")))
+	SceneRouter.set_current_map(ActorService.get_player_map_id())

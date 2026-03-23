@@ -7,6 +7,19 @@ func get_enter_message() -> String:
 	return "The seed shop is open."
 
 
+func describe_static_interactables() -> Array:
+	return [
+		{
+			"target_id": "shop.to_farm",
+			"kind": "door",
+			"prompt": "Back to the farm",
+			"cell": {"x": 6, "y": 11},
+			"destination_map_id": "farm",
+			"destination_spawn_id": "from_shop"
+		}
+	]
+
+
 func _build_static_map() -> void:
 	ground_layer.clear()
 	collision_layer.clear()

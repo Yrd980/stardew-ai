@@ -29,8 +29,12 @@ func reset_state() -> void:
 
 
 func load_state(payload: Dictionary) -> void:
-	active_quests = payload.get("active_quests", []).duplicate(true)
-	completed_quests = payload.get("completed_quests", []).duplicate(true)
+	active_quests = []
+	for quest_id_variant in payload.get("active_quests", []):
+		active_quests.append(String(quest_id_variant))
+	completed_quests = []
+	for quest_id_variant in payload.get("completed_quests", []):
+		completed_quests.append(String(quest_id_variant))
 	quest_progress = payload.get("quest_progress", {}).duplicate(true)
 	quest_log_changed.emit()
 

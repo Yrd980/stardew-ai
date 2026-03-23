@@ -12,7 +12,12 @@ const SHOP_DIR := "res://resources/shops"
 const QUEST_DIR := "res://resources/quests"
 const RECIPE_DIR := "res://resources/recipes"
 const PLACEABLE_DIR := "res://resources/placeables"
-const CURRENT_SAVE_VERSION := 4
+const CURRENT_SAVE_VERSION := 5
+const MAP_SCENES := {
+	"farm": "res://scenes/maps/farm_map.tscn",
+	"house": "res://scenes/maps/house_map.tscn",
+	"shop": "res://scenes/maps/shop_map.tscn"
+}
 
 var item_defs := {}
 var tool_defs := {}
@@ -104,7 +109,7 @@ func start_new_game() -> void:
 	QuestService.reset_state()
 	CraftingService.reset_state()
 	MailService.reset_state()
-	WorldState.set_player_position("farm", Vector2(160, 208))
+	ActorService.reset_state()
 	SceneRouter.set_current_map("farm")
 
 

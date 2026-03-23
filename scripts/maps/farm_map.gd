@@ -15,6 +15,45 @@ func can_farm_cell(cell: Vector2i) -> bool:
 	return FARMABLE_RECT.has_point(cell)
 
 
+func describe_static_interactables() -> Array:
+	return [
+		{
+			"target_id": "farm.to_house",
+			"kind": "door",
+			"prompt": "Go inside",
+			"cell": {"x": 22, "y": 9},
+			"destination_map_id": "house",
+			"destination_spawn_id": "from_farm"
+		},
+		{
+			"target_id": "farm.shipping_bin",
+			"kind": "shipping_bin",
+			"prompt": "Ship selected stack",
+			"cell": {"x": 7, "y": 8}
+		},
+		{
+			"target_id": "farm.to_shop",
+			"kind": "door",
+			"prompt": "Visit the seed shop",
+			"cell": {"x": 4, "y": 7},
+			"destination_map_id": "shop",
+			"destination_spawn_id": "from_farm"
+		},
+		{
+			"target_id": "farm.workbench",
+			"kind": "workbench",
+			"prompt": "Use the workbench",
+			"cell": {"x": 13, "y": 8}
+		},
+		{
+			"target_id": "farm.delivery_box",
+			"kind": "delivery_box",
+			"prompt": "Check deliveries",
+			"cell": {"x": 15, "y": 8}
+		}
+	]
+
+
 func _build_static_map() -> void:
 	ground_layer.clear()
 	collision_layer.clear()

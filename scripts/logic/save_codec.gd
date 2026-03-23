@@ -1,7 +1,7 @@
 class_name SaveCodec
 extends RefCounted
 
-const CURRENT_SAVE_VERSION := 4
+const CURRENT_SAVE_VERSION := 5
 
 func encode_state(payload: Dictionary) -> Dictionary:
 	var encoded: Dictionary = payload.duplicate(true)
@@ -48,6 +48,30 @@ func decode_state(payload: Dictionary) -> Dictionary:
 	if not decoded.has("mail"):
 		decoded["mail"] = {
 			"pending_deliveries": []
+		}
+	if not decoded.has("actors"):
+		var scene_router_payload: Dictionary = decoded.get("scene_router", {})
+		var world_payload: Dictionary = decoded.get("world", {})
+		var player_positions: Dictionary = world_payload.get("player_positions", {})
+		var current_map_id := String(scene_router_payload.get("current_map_id", "farm"))
+		var player_position: Dictionary = player_positions.get(current_map_id, player_positions.get("farm", {"x": 160.0, "y": 208.0}))
+		decoded["actors"] = {
+			"player": {
+				"map_id": current_map_id,
+				"cell": {"x": 4, "y": 6},
+				"world_position": {
+					"x": float(player_position.get("x", 160.0)),
+					"y": float(player_position.get("y", 208.0))
+				},
+				"facing": "down"
+			}
+		}
+	elif not decoded["actors"].has("player"):
+		decoded["actors"]["player"] = {
+			"map_id": "farm",
+			"cell": {"x": 4, "y": 6},
+			"world_position": {"x": 160.0, "y": 208.0},
+			"facing": "down"
 		}
 	if not decoded.has("world"):
 		decoded["world"] = {}

@@ -15,8 +15,12 @@ func reset_state() -> void:
 
 
 func load_state(payload: Dictionary) -> void:
-	known_recipe_ids = payload.get("known_recipe_ids", []).duplicate()
-	unlocked_recipe_ids = payload.get("unlocked_recipe_ids", []).duplicate()
+	known_recipe_ids = []
+	for recipe_id_variant in payload.get("known_recipe_ids", []):
+		known_recipe_ids.append(String(recipe_id_variant))
+	unlocked_recipe_ids = []
+	for recipe_id_variant in payload.get("unlocked_recipe_ids", []):
+		unlocked_recipe_ids.append(String(recipe_id_variant))
 	crafting_changed.emit()
 
 

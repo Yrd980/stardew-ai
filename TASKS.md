@@ -22,6 +22,17 @@
 - [x] Standardize result contracts across interactables, NPC interaction, shop actions, sleep flow, and quest completion messaging
 - [x] Keep docs aligned whenever service boundaries or gameplay claims change
 - [x] Treat real runtime boot as the verification boundary instead of repo-local tests
+- [x] Make the default runtime player-only OpenClaw authority instead of human-input authority
+- [x] Persist authoritative player actor state in save schema v5
+- [x] Export mailbox-based OpenClaw commands, results, snapshot, and room directory from Godot
+- [x] Keep NPCs fixed and schedule-owned while the player path moves to OpenClaw control
+
+## OpenClaw Runtime Follow-Up
+
+- [ ] Broaden command coverage from the current player loop into more map traversal, farming, and progression scenarios as they ship
+- [ ] Tighten snapshot normalization where OpenClaw needs more stable IDs or richer world detail
+- [ ] Add higher-signal bridge events for downstream orchestration instead of only per-command result files
+- [ ] Decide when to prune the older human-oriented entry path completely after the OpenClaw runtime has enough operator confidence
 
 ## Phase 1: Farming And Economy Depth
 

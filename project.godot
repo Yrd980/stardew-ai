@@ -5,7 +5,7 @@ config_version=5
 [application]
 
 config/name="Stardew AI"
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://scenes/openclaw_runtime.tscn"
 config/features=PackedStringArray("4.6")
 config/icon="res://icon.svg"
 
@@ -25,6 +25,10 @@ ActionCoordinator="*res://scripts/autoload/action_coordinator.gd"
 UiSessionService="*res://scripts/autoload/ui_session_service.gd"
 CraftingService="*res://scripts/autoload/crafting_service.gd"
 MailService="*res://scripts/autoload/mail_service.gd"
+ActorService="*res://scripts/autoload/actor_service.gd"
+AgentSnapshotService="*res://scripts/autoload/agent_snapshot_service.gd"
+AgentCommandService="*res://scripts/autoload/agent_command_service.gd"
+AgentBridgeService="*res://scripts/autoload/agent_bridge_service.gd"
 
 [display]
 

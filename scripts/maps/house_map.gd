@@ -8,6 +8,25 @@ func get_enter_message() -> String:
 	return "Safe and warm inside."
 
 
+func describe_static_interactables() -> Array:
+	return [
+		{
+			"target_id": "house.to_farm",
+			"kind": "door",
+			"prompt": "Step outside",
+			"cell": {"x": 8, "y": 11},
+			"destination_map_id": "farm",
+			"destination_spawn_id": "from_house"
+		},
+		{
+			"target_id": "house.bed",
+			"kind": "bed",
+			"prompt": "Sleep until morning",
+			"cell": {"x": 4, "y": 3}
+		}
+	]
+
+
 func _build_static_map() -> void:
 	ground_layer.clear()
 	collision_layer.clear()

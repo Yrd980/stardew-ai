@@ -86,6 +86,50 @@ func purchase_shop_item(shop_id: String, item_id: String, quantity: int = 1, npc
 	return _publish(EconomyService.purchase_item(shop_id, item_id, quantity))
 
 
+func use_tool_at(map_id: String, cell: Vector2i, tool_id: String, can_farm_cell: bool) -> Dictionary:
+	return _publish(_use_tool(map_id, cell, can_farm_cell, tool_id))
+
+
+func plant_seed_at(map_id: String, cell: Vector2i, item_id: String, can_farm_cell: bool) -> Dictionary:
+	return _publish(_plant_seed(map_id, cell, can_farm_cell, item_id))
+
+
+func apply_fertilizer_at(map_id: String, cell: Vector2i, item_id: String) -> Dictionary:
+	return _publish(FarmService.apply_fertilizer(map_id, cell, item_id))
+
+
+func place_object_at(map_id: String, cell: Vector2i, item_id: String) -> Dictionary:
+	return _publish(FarmService.place_selected_object(map_id, cell, item_id))
+
+
+func harvest_at(map_id: String, cell: Vector2i) -> Dictionary:
+	return _publish(FarmService.harvest_crop(map_id, cell))
+
+
+func talk_to_npc(npc_id: String) -> Dictionary:
+	return _publish(NpcService.interact_with_npc(npc_id))
+
+
+func ship_inventory_slot(slot_index: int, amount: int = 0) -> Dictionary:
+	return _publish(EconomyService.queue_inventory_slot_for_shipping(slot_index, amount))
+
+
+func craft_recipe_by_id(recipe_id: String) -> Dictionary:
+	return _publish(CraftingService.craft_recipe(recipe_id))
+
+
+func claim_delivery() -> Dictionary:
+	return _publish(MailService.claim_next_delivery())
+
+
+func container_store(container_id: String, inventory_slot_index: int, amount: int = 0) -> Dictionary:
+	return _publish(_store_inventory_slot_in_container(container_id, inventory_slot_index, amount))
+
+
+func container_take(container_id: String, container_slot_index: int, amount: int = 0) -> Dictionary:
+	return _publish(_take_from_container(container_id, container_slot_index, amount))
+
+
 func save_game(map_id: String, player_position: Vector2) -> Dictionary:
 	return _publish(_save_game_result(map_id, player_position))
 
@@ -171,10 +215,16 @@ func _result(success: bool, message: String, time_cost: int = 0, events: Array =
 
 
 func _store_selected_in_container(container_id: String) -> Dictionary:
+	return _store_inventory_slot_in_container(container_id, InventoryService.selected_index, 0)
+
+
+func _store_inventory_slot_in_container(container_id: String, inventory_slot_index: int, amount: int = 0) -> Dictionary:
 	var slots: Array = WorldState.get_container_slots(container_id)
 	if slots.is_empty():
 		return _result(false, "That container is not available.")
-	var selected := InventoryService.get_selected_slot()
+	if inventory_slot_index < 0 or inventory_slot_index >= InventoryService.slots.size():
+		return _result(false, "That inventory slot is not available.")
+	var selected := InventoryService.get_slot(inventory_slot_index)
 	var item_id := String(selected.get("item_id", ""))
 	if item_id.is_empty():
 		return _result(false, "Select an item to store first.")
@@ -182,16 +232,21 @@ func _store_selected_in_container(container_id: String) -> Dictionary:
 	var item = GameState.get_item_data(item_id)
 	if item == null:
 		return _result(false, "That item is missing data.")
+	var count := int(selected.get("count", 0))
+	if amount > 0:
+		count = min(count, amount)
+	if count <= 0:
+		return _result(false, "Choose at least one item to store.")
 	var inventory_logic = InventoryLogicScript.new()
-	var result: Dictionary = inventory_logic.add_item(slots, item_id, int(selected.get("count", 0)), int(item.max_stack), quality)
+	var result: Dictionary = inventory_logic.add_item(slots, item_id, count, int(item.max_stack), quality)
 	if int(result.get("leftover", 0)) > 0:
 		return _result(false, "The chest does not have enough room.")
 	WorldState.set_container_slots(container_id, result.get("slots", []))
-	InventoryService.remove_amount(InventoryService.selected_index, int(selected.get("count", 0)))
+	InventoryService.remove_amount(inventory_slot_index, count)
 	return _result(true, "Stored %s." % item.display_name)
 
 
-func _take_from_container(container_id: String, slot_index: int) -> Dictionary:
+func _take_from_container(container_id: String, slot_index: int, amount: int = 0) -> Dictionary:
 	var slots: Array = WorldState.get_container_slots(container_id)
 	if slot_index < 0 or slot_index >= slots.size():
 		return _result(false, "That chest slot is not available.")
@@ -200,6 +255,10 @@ func _take_from_container(container_id: String, slot_index: int) -> Dictionary:
 	if item_id.is_empty():
 		return _result(false, "That chest slot is empty.")
 	var count := int(slot.get("count", 0))
+	if amount > 0:
+		count = min(count, amount)
+	if count <= 0:
+		return _result(false, "Choose at least one item to take.")
 	var quality := String(slot.get("quality", "normal"))
 	if not InventoryService.can_add_item_with_quality(item_id, count, quality):
 		return _result(false, "Inventory full. Make room before taking that out.")

@@ -69,6 +69,42 @@ func can_farm_cell(_cell: Vector2i) -> bool:
 	return false
 
 
+func can_walk_cell(cell: Vector2i) -> bool:
+	if cell.x < 0 or cell.y < 0 or cell.x >= map_size.x or cell.y >= map_size.y:
+		return false
+	if collision_layer.get_cell_source_id(cell) != -1:
+		return false
+	return not WorldState.has_placeable(map_id, cell)
+
+
+func describe_static_interactables() -> Array:
+	return []
+
+
+func get_room_directory() -> Dictionary:
+	return {
+		"map_id": map_id,
+		"static_interactables": describe_static_interactables()
+	}
+
+
+func find_static_interactable_descriptor(target_id: String) -> Dictionary:
+	for descriptor_variant in describe_static_interactables():
+		var descriptor: Dictionary = descriptor_variant
+		if String(descriptor.get("target_id", "")) == target_id:
+			return descriptor.duplicate(true)
+	return {}
+
+
+func find_static_interactable_at_cell(cell: Vector2i) -> Dictionary:
+	for descriptor_variant in describe_static_interactables():
+		var descriptor: Dictionary = descriptor_variant
+		var descriptor_cell: Dictionary = descriptor.get("cell", {})
+		if int(descriptor_cell.get("x", -9999)) == cell.x and int(descriptor_cell.get("y", -9999)) == cell.y:
+			return descriptor.duplicate(true)
+	return {}
+
+
 func find_interactable(target_world: Vector2, actor_world: Vector2):
 	var best = null
 	var best_distance := INF

@@ -53,6 +53,13 @@ func add_money(amount: int) -> void:
 
 func queue_selected_stack_for_shipping() -> Dictionary:
 	var slot := InventoryService.get_selected_slot()
+	return queue_inventory_slot_for_shipping(InventoryService.selected_index, int(slot.get("count", 0)))
+
+
+func queue_inventory_slot_for_shipping(slot_index: int, amount: int = 0) -> Dictionary:
+	if slot_index < 0 or slot_index >= InventoryService.slots.size():
+		return _result(false, "That inventory slot is not available.")
+	var slot: Dictionary = InventoryService.get_slot(slot_index)
 	var item_id := String(slot.get("item_id", ""))
 	var quality := String(slot.get("quality", "normal"))
 	if item_id.is_empty():
@@ -61,6 +68,10 @@ func queue_selected_stack_for_shipping() -> Dictionary:
 	if item == null or int(item.sell_price) <= 0:
 		return _result(false, "Select a sellable item first.")
 	var count := int(slot.get("count", 0))
+	if amount > 0:
+		count = min(count, amount)
+	if count <= 0:
+		return _result(false, "Choose at least one item to ship.")
 	var unit_price := get_sell_price(item_id, quality)
 	var shipment := {
 		"item_id": item_id,
@@ -69,7 +80,7 @@ func queue_selected_stack_for_shipping() -> Dictionary:
 		"unit_price": unit_price,
 		"total_price": unit_price * count
 	}
-	InventoryService.remove_amount(InventoryService.selected_index, count)
+	InventoryService.remove_amount(slot_index, count)
 	pending_shipments.append(shipment)
 	pending_shipments_changed.emit()
 	var quality_label := "" if quality == "normal" else "%s " % quality.capitalize()
