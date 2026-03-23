@@ -11,6 +11,8 @@ This repository currently ships a playable backend-first vertical slice with a b
 - merchant and field-planner NPC schedule projection
 - progressive shop stock that unlocks as quest milestones are completed
 - quest chains tied to talking, buying seeds, harvesting produce, shipping crops, regrowing vines, and higher-value overnight shipments
+- chest placement and storage, workbench crafting, fertilizer tiers, and crop quality
+- next-day delivery claims for recipe permits and progression unlocks
 - save/load through `user://savegame.json`
 
 ## Stardew Target
@@ -57,6 +59,8 @@ The current implementation is intentionally thin in presentation but structured 
 - dynamic soil and crop state is stored by `map_id + tile coordinate`
 - map ownership is routed through `SceneRouter`, while world save data only stores durable simulation state
 - money, shipping, stock unlocks, and shipment history are owned by `EconomyService`
+- recipe unlocks and delayed delivery claims now flow through dedicated crafting/mail services
+- placeables and chest storage are persisted as world-state data instead of scene-owned objects
 - quest turn-ins protect item rewards instead of silently consuming them when the inventory is full
 - NPC projection is schedule-derived at runtime instead of persisted directly
 - farming, economy, NPC, and quest flows route through dedicated services with a shared action-result envelope
@@ -67,6 +71,8 @@ The current implementation is intentionally thin in presentation but structured 
 - Mae's stock now steps from parsnips into potatoes, cauliflower, blueberries, tomatoes, and melons
 - Rowan's field-planning quest chain now continues past first regrowth into repeat-yield tomato work and premium melon deliveries
 - overnight shipping progress now tracks both item counts and higher-value settlement milestones
+- Mae now sells raw lumber/sap plus recipe permits that arrive through the farm delivery box on the next day
+- workbench recipes currently cover a basic chest, starter fertilizer, and a later quality-fertilizer unlock
 
 ## Planned Delivery Order
 

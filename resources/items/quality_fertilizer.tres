@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "quality_fertilizer"
+display_name = "Quality Fertilizer"
+kind = "fertilizer"
+max_stack = 99
+sell_price = 32
+fertilizer_tier = 2
+description = "A richer blend that pushes crops toward gold quality."

@@ -5,6 +5,9 @@ signal session_changed
 var inventory_open := false
 var active_shop_id := ""
 var active_shopkeeper_id := ""
+var active_container_id := ""
+var crafting_open := false
+var delivery_open := false
 
 
 func _ready() -> void:
@@ -20,7 +23,7 @@ func is_inventory_open() -> bool:
 
 
 func is_modal_open() -> bool:
-	return not active_shop_id.is_empty()
+	return not active_shop_id.is_empty() or not active_container_id.is_empty() or crafting_open or delivery_open
 
 
 func get_active_shop_id() -> String:
@@ -29,6 +32,18 @@ func get_active_shop_id() -> String:
 
 func get_active_shopkeeper_id() -> String:
 	return active_shopkeeper_id
+
+
+func get_active_container_id() -> String:
+	return active_container_id
+
+
+func is_crafting_open() -> bool:
+	return crafting_open
+
+
+func is_delivery_open() -> bool:
+	return delivery_open
 
 
 func toggle_inventory() -> void:
@@ -42,15 +57,53 @@ func toggle_inventory() -> void:
 func open_shop(shop_id: String, npc_id: String = "") -> void:
 	if shop_id.is_empty():
 		return
+	_clear_modals()
 	active_shop_id = shop_id
 	active_shopkeeper_id = npc_id
 	inventory_open = false
 	session_changed.emit()
 
 
-func close_shop() -> void:
-	if active_shop_id.is_empty() and active_shopkeeper_id.is_empty() and not inventory_open:
+func open_container(container_id: String) -> void:
+	if container_id.is_empty():
 		return
+	_clear_modals()
+	active_container_id = container_id
+	inventory_open = false
+	session_changed.emit()
+
+
+func open_crafting() -> void:
+	_clear_modals()
+	crafting_open = true
+	inventory_open = false
+	session_changed.emit()
+
+
+func open_delivery() -> void:
+	_clear_modals()
+	delivery_open = true
+	inventory_open = false
+	session_changed.emit()
+
+
+func close_shop() -> void:
+	if active_shop_id.is_empty() and active_shopkeeper_id.is_empty() and active_container_id.is_empty() and not crafting_open and not delivery_open and not inventory_open:
+		return
+	_clear_modals()
+	session_changed.emit()
+
+
+func close_modal() -> void:
+	if not is_modal_open():
+		return
+	_clear_modals()
+	session_changed.emit()
+
+
+func _clear_modals() -> void:
 	active_shop_id = ""
 	active_shopkeeper_id = ""
-	session_changed.emit()
+	active_container_id = ""
+	crafting_open = false
+	delivery_open = false

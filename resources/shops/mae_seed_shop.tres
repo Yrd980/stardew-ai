@@ -12,6 +12,24 @@ stock = [{
 "daily_limit": 5,
 "restock_daily": true
 }, {
+"item_id": "wood",
+"price": 8,
+"daily_limit": 20,
+"restock_daily": true
+}, {
+"item_id": "sap",
+"price": 6,
+"daily_limit": 20,
+"restock_daily": true
+}, {
+"item_id": "quality_farming_permit",
+"price": 180,
+"daily_limit": 1,
+"restock_daily": false,
+"min_day": 2,
+"required_completed_quest": "03_ship_first_crop",
+"delivery_recipe_unlocks": ["basic_chest_recipe", "basic_fertilizer_recipe"]
+}, {
 "item_id": "potato_seeds",
 "price": 35,
 "daily_limit": 4,
@@ -39,6 +57,14 @@ stock = [{
 	"restock_daily": true,
 	"min_day": 8,
 	"required_completed_quest": "09_shipping_momentum"
+	}, {
+	"item_id": "quality_farming_notes",
+	"price": 260,
+	"daily_limit": 1,
+	"restock_daily": false,
+	"min_day": 9,
+	"required_completed_quest": "09_shipping_momentum",
+	"delivery_recipe_unlocks": ["quality_fertilizer_recipe"]
 	}, {
 	"item_id": "melon_seeds",
 	"price": 140,

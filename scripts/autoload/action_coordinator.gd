@@ -1,11 +1,13 @@
 extends Node
 
+const InventoryLogicScript = preload("res://scripts/logic/inventory_logic.gd")
+
 signal message_requested(message: String)
 signal shop_requested(shop_id: String, npc_id: String)
 signal shop_close_requested
 
 
-func use_selected_slot(map_id: String, cell: Vector2i, can_farm_cell: bool) -> Dictionary:
+func use_selected_slot(map_id: String, cell: Vector2i, target_context: Dictionary) -> Dictionary:
 	var slot := InventoryService.get_selected_slot()
 	var item_id := String(slot.get("item_id", ""))
 	if item_id.is_empty():
@@ -15,9 +17,13 @@ func use_selected_slot(map_id: String, cell: Vector2i, can_farm_cell: bool) -> D
 		return _publish(_result(false, "That item is missing data."))
 	match String(item.kind):
 		"tool":
-			return _publish(_use_tool(map_id, cell, can_farm_cell, item_id))
+			return _publish(_use_tool(map_id, cell, bool(target_context.get("can_farm_cell", false)), item_id))
 		"seed":
-			return _publish(_plant_seed(map_id, cell, can_farm_cell, item_id))
+			return _publish(_plant_seed(map_id, cell, bool(target_context.get("can_farm_cell", false)), item_id))
+		"fertilizer":
+			return _publish(FarmService.apply_fertilizer(map_id, cell, item_id))
+		"placeable":
+			return _publish(FarmService.place_selected_object(map_id, cell, item_id))
 		_:
 			return _publish(_result(false, "That item is for inventory or shipping."))
 
@@ -53,6 +59,22 @@ func run_action_request(request: Dictionary) -> Dictionary:
 			result = NpcService.interact_with_npc(String(request.get("npc_id", "")))
 		"save_game":
 			result = _save_game_result(String(request.get("map_id", "")), request.get("player_position", Vector2.ZERO))
+		"open_container":
+			result = _result(true, String(request.get("message", "")), 0, [], {
+				"open_container": {"container_id": String(request.get("container_id", ""))}
+			})
+		"container_store_selected":
+			result = _store_selected_in_container(String(request.get("container_id", "")))
+		"container_take_slot":
+			result = _take_from_container(String(request.get("container_id", "")), int(request.get("slot_index", -1)))
+		"open_crafting":
+			result = _result(true, String(request.get("message", "")), 0, [], {"open_crafting": true})
+		"craft_recipe":
+			result = CraftingService.craft_recipe(String(request.get("recipe_id", "")))
+		"open_delivery":
+			result = _result(true, String(request.get("message", "")), 0, [], {"open_delivery": true})
+		"claim_delivery":
+			result = MailService.claim_next_delivery()
 		_:
 			result = _result(false, "Unknown action request.")
 	return _publish(result)
@@ -110,6 +132,13 @@ func _publish(result: Dictionary) -> Dictionary:
 	if directives.has("open_shop"):
 		var open_shop: Dictionary = directives.get("open_shop", {})
 		shop_requested.emit(String(open_shop.get("shop_id", "")), String(open_shop.get("npc_id", "")))
+	if directives.has("open_container"):
+		var open_container: Dictionary = directives.get("open_container", {})
+		UiSessionService.open_container(String(open_container.get("container_id", "")))
+	if directives.get("open_crafting", false):
+		UiSessionService.open_crafting()
+	if directives.get("open_delivery", false):
+		UiSessionService.open_delivery()
 	var message := String(normalized.get("message", ""))
 	if not message.is_empty():
 		message_requested.emit(message)
@@ -139,3 +168,43 @@ func _result(success: bool, message: String, time_cost: int = 0, events: Array =
 		"events": events,
 		"directives": directives
 	}
+
+
+func _store_selected_in_container(container_id: String) -> Dictionary:
+	var slots: Array = WorldState.get_container_slots(container_id)
+	if slots.is_empty():
+		return _result(false, "That container is not available.")
+	var selected := InventoryService.get_selected_slot()
+	var item_id := String(selected.get("item_id", ""))
+	if item_id.is_empty():
+		return _result(false, "Select an item to store first.")
+	var quality := String(selected.get("quality", "normal"))
+	var item = GameState.get_item_data(item_id)
+	if item == null:
+		return _result(false, "That item is missing data.")
+	var inventory_logic = InventoryLogicScript.new()
+	var result: Dictionary = inventory_logic.add_item(slots, item_id, int(selected.get("count", 0)), int(item.max_stack), quality)
+	if int(result.get("leftover", 0)) > 0:
+		return _result(false, "The chest does not have enough room.")
+	WorldState.set_container_slots(container_id, result.get("slots", []))
+	InventoryService.remove_amount(InventoryService.selected_index, int(selected.get("count", 0)))
+	return _result(true, "Stored %s." % item.display_name)
+
+
+func _take_from_container(container_id: String, slot_index: int) -> Dictionary:
+	var slots: Array = WorldState.get_container_slots(container_id)
+	if slot_index < 0 or slot_index >= slots.size():
+		return _result(false, "That chest slot is not available.")
+	var slot: Dictionary = slots[slot_index]
+	var item_id := String(slot.get("item_id", ""))
+	if item_id.is_empty():
+		return _result(false, "That chest slot is empty.")
+	var count := int(slot.get("count", 0))
+	var quality := String(slot.get("quality", "normal"))
+	if not InventoryService.can_add_item_with_quality(item_id, count, quality):
+		return _result(false, "Inventory full. Make room before taking that out.")
+	InventoryService.add_item(item_id, count, quality)
+	var next_slots: Array = InventoryLogicScript.new().remove_amount(slots, slot_index, count)
+	WorldState.set_container_slots(container_id, next_slots)
+	var item = GameState.get_item_data(item_id)
+	return _result(true, "Took %s." % (item.display_name if item else item_id))

@@ -98,3 +98,54 @@ offset_right = 332.0
 offset_bottom = 244.0
 autowrap_mode = 2
 text = "Shop"
+
+[node name="ContainerPanel" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 872.0
+offset_top = 300.0
+offset_right = 1264.0
+offset_bottom = 704.0
+
+[node name="ContainerLabel" type="Label" parent="ContainerPanel"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 10.0
+offset_right = 368.0
+offset_bottom = 380.0
+autowrap_mode = 2
+text = "Chest"
+
+[node name="CraftingPanel" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 840.0
+offset_top = 200.0
+offset_right = 1264.0
+offset_bottom = 704.0
+
+[node name="CraftingLabel" type="Label" parent="CraftingPanel"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 10.0
+offset_right = 400.0
+offset_bottom = 480.0
+autowrap_mode = 2
+text = "Crafting"
+
+[node name="DeliveryPanel" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 920.0
+offset_top = 240.0
+offset_right = 1264.0
+offset_bottom = 520.0
+
+[node name="DeliveryLabel" type="Label" parent="DeliveryPanel"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 10.0
+offset_right = 320.0
+offset_bottom = 256.0
+autowrap_mode = 2
+text = "Deliveries"

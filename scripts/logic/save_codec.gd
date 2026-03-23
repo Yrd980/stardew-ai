@@ -1,7 +1,7 @@
 class_name SaveCodec
 extends RefCounted
 
-const CURRENT_SAVE_VERSION := 3
+const CURRENT_SAVE_VERSION := 4
 
 func encode_state(payload: Dictionary) -> Dictionary:
 	var encoded: Dictionary = payload.duplicate(true)
@@ -40,4 +40,37 @@ func decode_state(payload: Dictionary) -> Dictionary:
 			"completed_quests": [],
 			"quest_progress": {}
 		}
+	if not decoded.has("crafting"):
+		decoded["crafting"] = {
+			"known_recipe_ids": [],
+			"unlocked_recipe_ids": []
+		}
+	if not decoded.has("mail"):
+		decoded["mail"] = {
+			"pending_deliveries": []
+		}
+	if not decoded.has("world"):
+		decoded["world"] = {}
+	if not decoded["world"].has("player_positions"):
+		decoded["world"]["player_positions"] = {}
+	if not decoded["world"].has("soils_by_map"):
+		decoded["world"]["soils_by_map"] = {}
+	if not decoded["world"].has("crops_by_map"):
+		decoded["world"]["crops_by_map"] = {}
+	if not decoded["world"].has("placeables_by_map"):
+		decoded["world"]["placeables_by_map"] = {}
+	if not decoded["world"].has("containers_by_id"):
+		decoded["world"]["containers_by_id"] = {}
+	if not decoded.has("inventory"):
+		decoded["inventory"] = {
+			"slots": [],
+			"selected_index": 0
+		}
+	var slots: Array = decoded["inventory"].get("slots", [])
+	for index in range(slots.size()):
+		var slot: Dictionary = slots[index]
+		if not slot.has("quality"):
+			slot["quality"] = "normal"
+		slots[index] = slot
+	decoded["inventory"]["slots"] = slots
 	return decoded

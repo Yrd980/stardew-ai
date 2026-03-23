@@ -10,7 +10,9 @@ const NPC_DIR := "res://resources/npcs"
 const SCHEDULE_DIR := "res://resources/schedules"
 const SHOP_DIR := "res://resources/shops"
 const QUEST_DIR := "res://resources/quests"
-const CURRENT_SAVE_VERSION := 3
+const RECIPE_DIR := "res://resources/recipes"
+const PLACEABLE_DIR := "res://resources/placeables"
+const CURRENT_SAVE_VERSION := 4
 
 var item_defs := {}
 var tool_defs := {}
@@ -19,6 +21,8 @@ var npc_defs := {}
 var schedule_defs := {}
 var shop_defs := {}
 var quest_defs := {}
+var recipe_defs := {}
+var placeable_defs := {}
 
 
 func _ready() -> void:
@@ -67,6 +71,8 @@ func load_databases() -> void:
 	schedule_defs = _load_resources(SCHEDULE_DIR)
 	shop_defs = _load_resources(SHOP_DIR)
 	quest_defs = _load_resources(QUEST_DIR)
+	recipe_defs = _load_resources(RECIPE_DIR)
+	placeable_defs = _load_resources(PLACEABLE_DIR)
 
 
 func _load_resources(dir_path: String) -> Dictionary:
@@ -96,6 +102,8 @@ func start_new_game() -> void:
 	EconomyService.reset_state()
 	NpcService.reset_state()
 	QuestService.reset_state()
+	CraftingService.reset_state()
+	MailService.reset_state()
 	WorldState.set_player_position("farm", Vector2(160, 208))
 	SceneRouter.set_current_map("farm")
 
@@ -126,6 +134,14 @@ func get_shop_data(shop_id: String):
 
 func get_quest_data(quest_id: String):
 	return quest_defs.get(quest_id)
+
+
+func get_recipe_data(recipe_id: String):
+	return recipe_defs.get(recipe_id)
+
+
+func get_placeable_data(placeable_id: String):
+	return placeable_defs.get(placeable_id)
 
 
 func format_time(minutes: int) -> String:

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "quality_fertilizer_recipe"
+display_name = "Quality Fertilizer"
+ingredients = [{
+"item_id": "sap",
+"count": 3
+}, {
+"item_id": "cauliflower",
+"count": 1
+}]
+outputs = [{
+"item_id": "quality_fertilizer",
+"count": 1
+}]
+unlock_day = 1
+description = "A premium blend tuned for top-shelf harvests."

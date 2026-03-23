@@ -25,12 +25,12 @@
 
 ## Phase 1: Farming And Economy Depth
 
-- [ ] Add storage and placeable farm infrastructure such as chests and a minimal placeable-object path
-- [ ] Add crafting plus recipe unlock flow for farm equipment and progression items
-- [ ] Add fertilizer and crop-quality rules so farming outcomes vary by preparation
+- [x] Add storage and placeable farm infrastructure such as chests and a minimal placeable-object path
+- [x] Add crafting plus recipe unlock flow for farm equipment and progression items
+- [x] Add fertilizer and crop-quality rules so farming outcomes vary by preparation
 - [ ] Add sprinklers or equivalent farm automation after manual crop care still works cleanly
-- [ ] Add stronger economy sinks such as tool upgrades, recipe/shop unlock costs, or service fees
-- [ ] Add delivery or claim flow for upgrades/rewards that should not appear instantly
+- [x] Add stronger economy sinks such as tool upgrades, recipe/shop unlock costs, or service fees
+- [x] Add delivery or claim flow for upgrades/rewards that should not appear instantly
 - [ ] Exit criteria: the player can grow, store, craft, improve, and reinvest instead of only buying seeds and shipping produce
 
 ## Phase 2: NPC, Social, And Quest Depth

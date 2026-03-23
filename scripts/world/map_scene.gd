@@ -3,6 +3,7 @@ extends Node2D
 const TilePalette = preload("res://scripts/world/tile_palette.gd")
 const CropLogicScript = preload("res://scripts/logic/crop_logic.gd")
 const NpcProjectionScene = preload("res://scenes/entities/npc_projection.tscn")
+const ContainerInteractable = preload("res://scripts/world/container_interactable.gd")
 
 @export var map_id := ""
 @export var map_size := Vector2i(16, 12)
@@ -12,22 +13,25 @@ const NpcProjectionScene = preload("res://scenes/entities/npc_projection.tscn")
 @onready var decoration_layer: TileMapLayer = $DecorationLayer
 @onready var interaction_layer: TileMapLayer = $InteractionLayer
 @onready var crop_layer: TileMapLayer = $CropLayer
+@onready var object_layer: TileMapLayer = $ObjectLayer
 @onready var solids_root: Node2D = $Solids
 @onready var interactables_root: Node2D = $Interactables
 @onready var spawn_points: Node2D = $SpawnPoints
 
 var npcs_root: Node2D
+var dynamic_interactables_root: Node2D
 
 var crop_logic = CropLogicScript.new()
 
 
 func _ready() -> void:
 	var tile_set := TilePalette.get_tile_set()
-	for layer in [ground_layer, collision_layer, decoration_layer, interaction_layer, crop_layer]:
+	for layer in [ground_layer, collision_layer, decoration_layer, interaction_layer, crop_layer, object_layer]:
 		layer.tile_set = tile_set
 	_build_static_map()
 	_build_solids()
 	_build_interactables()
+	_ensure_dynamic_interactables_root()
 	refresh_dynamic_layers()
 	_ensure_npcs_root()
 	refresh_npc_projections()
@@ -70,6 +74,8 @@ func find_interactable(target_world: Vector2, actor_world: Vector2):
 	var best_distance := INF
 	var candidates: Array = []
 	candidates.append_array(interactables_root.get_children())
+	if dynamic_interactables_root != null:
+		candidates.append_array(dynamic_interactables_root.get_children())
 	if npcs_root != null:
 		candidates.append_array(npcs_root.get_children())
 	for child in candidates:
@@ -84,6 +90,7 @@ func find_interactable(target_world: Vector2, actor_world: Vector2):
 func refresh_dynamic_layers() -> void:
 	interaction_layer.clear()
 	crop_layer.clear()
+	object_layer.clear()
 	var soils: Dictionary = WorldState.get_soils(map_id)
 	for key in soils.keys():
 		var cell := WorldState.key_to_cell(String(key))
@@ -100,8 +107,18 @@ func refresh_dynamic_layers() -> void:
 			continue
 		var stage: int = crop_logic.get_stage(int(crop_state.get("days_watered", 0)), crop_def)
 		crop_layer.set_cell(cell, TilePalette.SOURCE_ID, TilePalette.get_crop_stage_coords(stage))
+	var placeables: Dictionary = WorldState.get_placeables(map_id)
+	for key in placeables.keys():
+		var cell := WorldState.key_to_cell(String(key))
+		var placeable_state: Dictionary = placeables[key]
+		var placeable = GameState.get_placeable_data(String(placeable_state.get("placeable_id", "")))
+		if placeable == null:
+			continue
+		object_layer.set_cell(cell, TilePalette.SOURCE_ID, placeable.atlas_coords)
+	_refresh_dynamic_interactables(placeables)
 	interaction_layer.update_internals()
 	crop_layer.update_internals()
+	object_layer.update_internals()
 
 
 func _on_world_changed(changed_map_id: String) -> void:
@@ -127,6 +144,34 @@ func _ensure_npcs_root() -> void:
 	npcs_root = Node2D.new()
 	npcs_root.name = "NPCs"
 	add_child(npcs_root)
+
+
+func _ensure_dynamic_interactables_root() -> void:
+	if has_node("DynamicInteractables"):
+		dynamic_interactables_root = $DynamicInteractables
+		return
+	dynamic_interactables_root = Node2D.new()
+	dynamic_interactables_root.name = "DynamicInteractables"
+	add_child(dynamic_interactables_root)
+
+
+func _refresh_dynamic_interactables(placeables: Dictionary) -> void:
+	if dynamic_interactables_root == null:
+		return
+	for child in dynamic_interactables_root.get_children():
+		child.queue_free()
+	for key in placeables.keys():
+		var placeable_state: Dictionary = placeables[key]
+		var placeable = GameState.get_placeable_data(String(placeable_state.get("placeable_id", "")))
+		if placeable == null or String(placeable.kind) != "storage":
+			continue
+		var cell := WorldState.key_to_cell(String(key))
+		var chest := ContainerInteractable.new()
+		chest.name = "Chest_%s" % String(placeable_state.get("object_id", ""))
+		chest.position = cell_to_world(cell)
+		chest.container_id = String(placeable_state.get("object_id", ""))
+		chest.prompt = "Open chest"
+		dynamic_interactables_root.add_child(chest)
 
 
 func _on_npc_states_changed() -> void:

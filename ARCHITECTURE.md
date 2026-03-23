@@ -30,7 +30,7 @@ The intended destination is a fuller Stardew-like life sim, but it should still 
 - merchant and field-planner NPC projection driven by daily schedules
 - shop stock that unlocks as quest milestones are completed
 - quest chains tied to talking, buying, harvesting, shipping, shipment-value milestones, and repeat-harvest crop progression
-- save/load through `user://savegame.json` with save schema v3 migration defaults
+- save/load through `user://savegame.json` with save schema v4 migration defaults
 
 ## Layer Model
 
@@ -41,15 +41,15 @@ Autoloads own long-lived runtime state and most gameplay orchestration.
 - `GameState`: resource loading, input map bootstrap, starting-state bootstrap, and content lookup
 - `SceneRouter`: current map ownership and map-change requests
 - `ClockService`: passive time flow, sleeping, day advancement, next-day settlement trigger
-- `InventoryService`: inventory slots, selection, stacking mutations
-- `WorldState`: soil, crop, regrowth, and per-map player position state
+- `InventoryService`: inventory slots, selection, quality-aware stacking mutations
+- `WorldState`: soil, crop, regrowth, placed objects, chest contents, and per-map player position state
 - `SaveManager`: compose, serialize, and load the top-level durable save snapshot
 - `FarmService`: farming actions and result/event dictionaries
 - `EconomyService`: money, shipping queue, shipment settlement, shipment history, and shop purchasing/unlock rules
 - `NpcService`: schedule-driven NPC projection state and interaction results
 - `QuestService`: quest activation, progress tracking, completion, and rewards, including reward-capacity checks before a turn-in finalizes
 - `ActionCoordinator`: user-intent entrypoint that applies shared side effects like time, map changes, save triggers, messages, and shop directives
-- `UiSessionService`: inventory/shop session ownership so HUD stays a projection layer
+- `UiSessionService`: inventory, shop, chest, crafting, and delivery session ownership so HUD stays a projection layer
 
 Planned next-wave services should extend this layer instead of pushing state back into map/player/UI scripts.
 
@@ -83,6 +83,7 @@ Keep calculations here when they do not need live scene nodes or autoload state 
 - NPC definitions and schedules
 - shop stock data with progression gates
 - quest chain definitions for item-count and shipment-value milestones
+- recipe and placeable-object resources for Phase 1 farming depth
 
 Planned resource surfaces should keep future gameplay data-driven:
 
@@ -99,7 +100,7 @@ Gameplay expansion should prefer new data resources over hardcoding content in s
 
 These scripts should stay thin and projection-oriented.
 
-- `scripts/world/map_scene.gd` renders static map structure plus dynamic soil/crop overlays and NPC projections
+- `scripts/world/map_scene.gd` renders static map structure plus dynamic soil/crop/placeable overlays and NPC projections
 - `scripts/maps/*.gd` define map-specific layout, spawn points, and interactables
 - `scripts/entities/player.gd` handles movement, targeting, and intent dispatch into `ActionCoordinator`
 - `scripts/entities/npc_projection.gd` projects NPC state and exposes an interaction request
@@ -118,6 +119,8 @@ These scripts should stay thin and projection-oriented.
 - `NpcService` derives runtime NPC projection state from schedule data and current time; that projection is not persisted
 - `EconomyService` owns money and other economy-facing save data
 - `UiSessionService` owns transient inventory/shop session state, not HUD widgets
+- `CraftingService` owns recipe unlock state and crafting outputs
+- `MailService` owns pending delivery claims for delayed unlocks
 - future durable simulation state should follow the same pattern: one save section per long-lived service when a subsystem actually ships
 
 ### Communication
@@ -161,20 +164,22 @@ Planned action families should also stay inside this contract shape:
 - `scripts/main.gd`: boots save or new game and swaps maps
 - `scripts/autoload/action_coordinator.gd`: central user-action boundary for player, shop, NPC, and interactable intents
 - `scripts/autoload/ui_session_service.gd`: transient inventory/shop session authority
+- `scripts/autoload/crafting_service.gd`: recipe availability and crafting outputs
+- `scripts/autoload/mail_service.gd`: next-day delivery queue and claim flow
 - `scripts/entities/player.gd`: reads input, computes target context, and dispatches intents
 - `scripts/autoload/world_state.gd`: soil/crop state and next-day processing
 - `scripts/autoload/farm_service.gd`: farming action entrypoints
 - `scripts/autoload/economy_service.gd`: shipping and purchasing entrypoints
 - `scripts/autoload/npc_service.gd`: NPC schedule projection and interaction state
 - `scripts/autoload/quest_service.gd`: quest tracking and reward flow
-- `scripts/world/map_scene.gd`: shared map rendering and dynamic projection refresh
-- `scripts/ui/hud.gd`: status, quest text, inventory, shop modal rendering, and action-coordinator signal handling
+- `scripts/world/map_scene.gd`: shared map rendering and dynamic projection refresh for crops, placeables, and chest interactables
+- `scripts/ui/hud.gd`: status, quest text, inventory, shop, chest, crafting, and delivery modal rendering
 
 ## Known Limits
 
 - placeholder visuals are still used throughout the project
 - the game is still a compact vertical slice even after adding more crops, progression gates, shipment-value progression, and a second quest-giver NPC
-- stamina, weather, calendar/seasonality, friendship, mail, crafting, fishing, mining, animals, festivals, and broader world simulation are not implemented yet
+- sprinklers/automation, stamina, weather, calendar/seasonality, friendship mail, fishing, mining, animals, festivals, and broader world simulation are not implemented yet
 
 ## Verified Commands
 

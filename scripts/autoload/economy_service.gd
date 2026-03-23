@@ -54,24 +54,29 @@ func add_money(amount: int) -> void:
 func queue_selected_stack_for_shipping() -> Dictionary:
 	var slot := InventoryService.get_selected_slot()
 	var item_id := String(slot.get("item_id", ""))
+	var quality := String(slot.get("quality", "normal"))
 	if item_id.is_empty():
 		return _result(false, "Select a sellable item first.")
 	var item = GameState.get_item_data(item_id)
 	if item == null or int(item.sell_price) <= 0:
 		return _result(false, "Select a sellable item first.")
 	var count := int(slot.get("count", 0))
+	var unit_price := get_sell_price(item_id, quality)
 	var shipment := {
 		"item_id": item_id,
+		"quality": quality,
 		"count": count,
-		"unit_price": int(item.sell_price),
-		"total_price": int(item.sell_price) * count
+		"unit_price": unit_price,
+		"total_price": unit_price * count
 	}
 	InventoryService.remove_amount(InventoryService.selected_index, count)
 	pending_shipments.append(shipment)
 	pending_shipments_changed.emit()
-	return _result(true, "Queued %s x%s for tomorrow's shipment." % [item.display_name, count], 5, [{
+	var quality_label := "" if quality == "normal" else "%s " % quality.capitalize()
+	return _result(true, "Queued %s%s x%s for tomorrow's shipment." % [quality_label, item.display_name, count], 5, [{
 		"type": "shipment_queued",
 		"item_id": item_id,
+		"quality": quality,
 		"count": count,
 		"total_price": int(shipment["total_price"])
 	}])
@@ -121,21 +126,48 @@ func purchase_item(shop_id: String, item_id: String, quantity: int = 1) -> Dicti
 	var total_price := unit_price * quantity
 	if money < total_price:
 		return _result(false, "Not enough money.")
-	if not InventoryService.can_add_item(item_id, quantity):
-		return _result(false, "Inventory full. Make room before buying.")
 	add_money(-total_price)
-	InventoryService.add_item(item_id, quantity)
-	_set_daily_purchase_count(shop_id, item_id, purchased_today + quantity)
+	var events := []
 	var item = GameState.get_item_data(item_id)
-	var result := _result(true, "Bought %s x%s for %sg." % [item.display_name if item else item_id, quantity, total_price], 10, [{
-		"type": "shop_purchase_completed",
-		"shop_id": shop_id,
-		"item_id": item_id,
-		"count": quantity,
-		"total_price": total_price
-	}])
+	if stock_entry.has("delivery_recipe_unlocks"):
+		MailService.queue_recipe_delivery(stock_entry.get("delivery_recipe_unlocks", []), String(item.display_name if item else item_id))
+		events.append({
+			"type": "delivery_queued",
+			"shop_id": shop_id,
+			"item_id": item_id
+		})
+	else:
+		if not InventoryService.can_add_item(item_id, quantity):
+			add_money(total_price)
+			return _result(false, "Inventory full. Make room before buying.")
+		InventoryService.add_item(item_id, quantity)
+		events.append({
+			"type": "shop_purchase_completed",
+			"shop_id": shop_id,
+			"item_id": item_id,
+			"count": quantity,
+			"total_price": total_price
+		})
+	_set_daily_purchase_count(shop_id, item_id, purchased_today + quantity)
+	var message := "Bought %s x%s for %sg." % [item.display_name if item else item_id, quantity, total_price]
+	if stock_entry.has("delivery_recipe_unlocks"):
+		message = "Ordered %s for %sg. Check the delivery box tomorrow." % [item.display_name if item else item_id, total_price]
+	var result := _result(true, message, 10, events)
 	purchase_completed.emit(result)
 	return result
+
+
+func get_sell_price(item_id: String, quality: String = "normal") -> int:
+	var item = GameState.get_item_data(item_id)
+	if item == null:
+		return 0
+	var multiplier := 1.0
+	match quality:
+		"silver":
+			multiplier = 1.25
+		"gold":
+			multiplier = 1.5
+	return int(round(int(item.sell_price) * multiplier))
 
 
 func get_purchase_count(shop_id: String, item_id: String) -> int:

@@ -17,6 +17,8 @@ map_size = Vector2i(14, 12)
 
 [node name="CropLayer" type="TileMapLayer" parent="."]
 
+[node name="ObjectLayer" type="TileMapLayer" parent="."]
+
 [node name="Solids" type="Node2D" parent="."]
 
 [node name="Interactables" type="Node2D" parent="."]

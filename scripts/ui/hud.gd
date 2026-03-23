@@ -11,11 +11,20 @@ var message_timer := 0.0
 @onready var inventory_label: Label = $InventoryPanel/InventoryLabel
 @onready var shop_panel: PanelContainer = $ShopPanel
 @onready var shop_label: Label = $ShopPanel/ShopLabel
+@onready var container_panel: PanelContainer = $ContainerPanel
+@onready var container_label: Label = $ContainerPanel/ContainerLabel
+@onready var crafting_panel: PanelContainer = $CraftingPanel
+@onready var crafting_label: Label = $CraftingPanel/CraftingLabel
+@onready var delivery_panel: PanelContainer = $DeliveryPanel
+@onready var delivery_label: Label = $DeliveryPanel/DeliveryLabel
 
 
 func _ready() -> void:
 	inventory_panel.visible = false
 	shop_panel.visible = false
+	container_panel.visible = false
+	crafting_panel.visible = false
+	delivery_panel.visible = false
 	if not ClockService.clock_changed.is_connected(_on_runtime_changed):
 		ClockService.clock_changed.connect(_on_runtime_changed)
 	if not EconomyService.money_changed.is_connected(_on_money_changed):
@@ -30,6 +39,10 @@ func _ready() -> void:
 		QuestService.quest_log_changed.connect(_on_quest_changed)
 	if not EconomyService.pending_shipments_changed.is_connected(_on_shipments_changed):
 		EconomyService.pending_shipments_changed.connect(_on_shipments_changed)
+	if not CraftingService.crafting_changed.is_connected(_on_crafting_changed):
+		CraftingService.crafting_changed.connect(_on_crafting_changed)
+	if not MailService.deliveries_changed.is_connected(_on_deliveries_changed):
+		MailService.deliveries_changed.connect(_on_deliveries_changed)
 	if not ActionCoordinator.message_requested.is_connected(push_message):
 		ActionCoordinator.message_requested.connect(push_message)
 	if not UiSessionService.session_changed.is_connected(_on_session_changed):
@@ -61,12 +74,46 @@ func handle_modal_input() -> void:
 	if not is_modal_open():
 		return
 	if Input.is_action_just_pressed("cancel_modal") or Input.is_action_just_pressed("toggle_inventory"):
-		UiSessionService.close_shop()
+		UiSessionService.close_modal()
 		return
-	for index in range(GameState.HOTBAR_SLOTS):
-		if Input.is_action_just_pressed("slot_%s" % (index + 1)):
-			_buy_shop_index(index)
+	if UiSessionService.get_active_shop_id() != "":
+		for index in range(GameState.HOTBAR_SLOTS):
+			if Input.is_action_just_pressed("slot_%s" % (index + 1)):
+				_buy_shop_index(index)
+				return
+		return
+	if UiSessionService.get_active_container_id() != "":
+		if Input.is_action_just_pressed("use_tool"):
+			ActionCoordinator.run_action_request({
+				"type": "container_store_selected",
+				"container_id": UiSessionService.get_active_container_id()
+			})
+			_refresh_all()
 			return
+		for index in range(GameState.HOTBAR_SLOTS):
+			if Input.is_action_just_pressed("slot_%s" % (index + 1)):
+				ActionCoordinator.run_action_request({
+					"type": "container_take_slot",
+					"container_id": UiSessionService.get_active_container_id(),
+					"slot_index": index
+				})
+				_refresh_all()
+				return
+		return
+	if UiSessionService.is_crafting_open():
+		var recipes := CraftingService.get_available_recipes()
+		for index in range(min(GameState.HOTBAR_SLOTS, recipes.size())):
+			if Input.is_action_just_pressed("slot_%s" % (index + 1)):
+				ActionCoordinator.run_action_request({
+					"type": "craft_recipe",
+					"recipe_id": String(recipes[index].id)
+				})
+				_refresh_all()
+				return
+		return
+	if UiSessionService.is_delivery_open() and Input.is_action_just_pressed("slot_1"):
+		ActionCoordinator.run_action_request({"type": "claim_delivery"})
+		_refresh_all()
 
 
 func open_shop(shop_id: String, npc_id: String = "") -> void:
@@ -84,6 +131,9 @@ func _refresh_all() -> void:
 	_refresh_inventory()
 	_refresh_quest()
 	_refresh_shop()
+	_refresh_container()
+	_refresh_crafting()
+	_refresh_delivery()
 
 
 func _refresh_status() -> void:
@@ -98,8 +148,14 @@ func _refresh_status() -> void:
 
 
 func _refresh_help() -> void:
-	if is_modal_open():
+	if UiSessionService.get_active_shop_id() != "":
 		help_label.text = "Shop 1-8 Buy  Tab/Esc Close"
+	elif UiSessionService.get_active_container_id() != "":
+		help_label.text = "Chest 1-8 Take  F Store selected  Tab/Esc Close"
+	elif UiSessionService.is_crafting_open():
+		help_label.text = "Crafting 1-8 Craft  Tab/Esc Close"
+	elif UiSessionService.is_delivery_open():
+		help_label.text = "Delivery 1 Claim  Tab/Esc Close"
 	else:
 		help_label.text = "Move WASD  Use F  Interact E  Inventory Tab  Save F5"
 
@@ -116,8 +172,7 @@ func _build_hotbar_text() -> String:
 		var item_id := String(slot.get("item_id", ""))
 		var label := "--"
 		if not item_id.is_empty():
-			var item = GameState.get_item_data(item_id)
-			label = "%s x%s" % [item.display_name if item else item_id, int(slot.get("count", 0))]
+			label = "%s x%s" % [_format_item_name(item_id, String(slot.get("quality", "normal"))), int(slot.get("count", 0))]
 		lines.append("%s%s. %s" % [marker, index + 1, label])
 	return "\n".join(lines)
 
@@ -129,8 +184,7 @@ func _refresh_inventory() -> void:
 		var item_id := String(slot.get("item_id", ""))
 		var label := "--"
 		if not item_id.is_empty():
-			var item = GameState.get_item_data(item_id)
-			label = "%s x%s" % [item.display_name if item else item_id, int(slot.get("count", 0))]
+			label = "%s x%s" % [_format_item_name(item_id, String(slot.get("quality", "normal"))), int(slot.get("count", 0))]
 		lines.append("%s. %s" % [index + 1, label])
 	inventory_label.text = "\n".join(lines)
 	inventory_panel.visible = UiSessionService.is_inventory_open()
@@ -141,14 +195,17 @@ func _refresh_quest() -> void:
 
 
 func _refresh_shop() -> void:
-	if not is_modal_open():
+	if UiSessionService.get_active_shop_id().is_empty():
 		shop_panel.visible = false
 		return
 	shop_panel.visible = true
+	container_panel.visible = false
+	crafting_panel.visible = false
+	delivery_panel.visible = false
 	var active_shop_id := UiSessionService.get_active_shop_id()
 	var active_shopkeeper_id := UiSessionService.get_active_shopkeeper_id()
 	if not active_shopkeeper_id.is_empty() and not NpcService.is_shop_open(active_shop_id, active_shopkeeper_id):
-		UiSessionService.close_shop()
+		UiSessionService.close_modal()
 		push_message("%s has stepped away from the counter." % _get_shopkeeper_name(active_shopkeeper_id))
 		return
 	var shop = GameState.get_shop_data(active_shop_id)
@@ -188,6 +245,67 @@ func _refresh_shop() -> void:
 	shop_label.text = "\n".join(lines)
 
 
+func _refresh_container() -> void:
+	if UiSessionService.get_active_container_id().is_empty():
+		container_panel.visible = false
+		return
+	container_panel.visible = true
+	shop_panel.visible = false
+	crafting_panel.visible = false
+	delivery_panel.visible = false
+	var lines := ["Chest", "", "F. Store selected stack"]
+	var slots: Array = WorldState.get_container_slots(UiSessionService.get_active_container_id())
+	for index in range(slots.size()):
+		var slot: Dictionary = slots[index]
+		var item_id := String(slot.get("item_id", ""))
+		var label := "--"
+		if not item_id.is_empty():
+			label = "%s x%s" % [_format_item_name(item_id, String(slot.get("quality", "normal"))), int(slot.get("count", 0))]
+		lines.append("%s. %s" % [index + 1, label])
+	container_label.text = "\n".join(lines)
+
+
+func _refresh_crafting() -> void:
+	if not UiSessionService.is_crafting_open():
+		crafting_panel.visible = false
+		return
+	crafting_panel.visible = true
+	shop_panel.visible = false
+	container_panel.visible = false
+	delivery_panel.visible = false
+	var lines := ["Workbench", ""]
+	var recipes := CraftingService.get_available_recipes()
+	if recipes.is_empty():
+		lines.append("No recipes unlocked yet.")
+	else:
+		for index in range(min(GameState.HOTBAR_SLOTS, recipes.size())):
+			var recipe = recipes[index]
+			lines.append("%s. %s" % [index + 1, _format_recipe_line(recipe)])
+	lines.append("")
+	lines.append("Permits arrive through the delivery box.")
+	crafting_label.text = "\n".join(lines)
+
+
+func _refresh_delivery() -> void:
+	if not UiSessionService.is_delivery_open():
+		delivery_panel.visible = false
+		return
+	delivery_panel.visible = true
+	shop_panel.visible = false
+	container_panel.visible = false
+	crafting_panel.visible = false
+	var lines := ["Delivery Box", ""]
+	var claimable := MailService.get_claimable_deliveries()
+	if claimable.is_empty():
+		lines.append("Nothing is ready today.")
+	else:
+		lines.append("1. Claim %s" % String(claimable[0].get("title", "Delivery")))
+	if MailService.pending_deliveries.size() > claimable.size():
+		lines.append("")
+		lines.append("More orders are still in transit.")
+	delivery_label.text = "\n".join(lines)
+
+
 func _buy_shop_index(index: int) -> void:
 	var active_shop_id := UiSessionService.get_active_shop_id()
 	var active_shopkeeper_id := UiSessionService.get_active_shopkeeper_id()
@@ -217,6 +335,8 @@ func _on_inventory_changed() -> void:
 	_refresh_hotbar()
 	if UiSessionService.is_inventory_open():
 		_refresh_inventory()
+	if UiSessionService.get_active_container_id() != "":
+		_refresh_container()
 
 
 func _on_selection_changed(_index: int) -> void:
@@ -235,7 +355,39 @@ func _on_shipments_changed() -> void:
 	_refresh_shop()
 
 
+func _on_crafting_changed() -> void:
+	_refresh_crafting()
+
+
+func _on_deliveries_changed() -> void:
+	_refresh_delivery()
+
+
 func _on_session_changed() -> void:
 	_refresh_help()
 	_refresh_inventory()
 	_refresh_shop()
+	_refresh_container()
+	_refresh_crafting()
+	_refresh_delivery()
+
+
+func _format_item_name(item_id: String, quality: String) -> String:
+	var item = GameState.get_item_data(item_id)
+	var display_name: String = item.display_name if item else item_id
+	match quality:
+		"silver":
+			return "Silver %s" % display_name
+		"gold":
+			return "Gold %s" % display_name
+		_:
+			return display_name
+
+
+func _format_recipe_line(recipe) -> String:
+	var ingredient_parts := []
+	for ingredient in recipe.ingredients:
+		var item_id := String(ingredient.get("item_id", ""))
+		var item = GameState.get_item_data(item_id)
+		ingredient_parts.append("%s x%s" % [item.display_name if item else item_id, int(ingredient.get("count", 1))])
+	return "%s (%s)" % [recipe.display_name, ", ".join(ingredient_parts)]

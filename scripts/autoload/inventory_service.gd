@@ -31,10 +31,14 @@ func build_save_data() -> Dictionary:
 
 
 func can_add_item(item_id: String, amount: int) -> bool:
+	return can_add_item_with_quality(item_id, amount, "normal")
+
+
+func can_add_item_with_quality(item_id: String, amount: int, quality: String = "normal") -> bool:
 	var item = GameState.get_item_data(item_id)
 	if item == null:
 		return false
-	var result: Dictionary = inventory_logic.add_item(slots, item_id, amount, item.max_stack)
+	var result: Dictionary = inventory_logic.add_item(slots, item_id, amount, item.max_stack, quality)
 	return int(result["leftover"]) == 0
 
 
@@ -61,11 +65,11 @@ func cycle_selected(delta: int) -> void:
 	selection_changed.emit(selected_index)
 
 
-func add_item(item_id: String, amount: int) -> bool:
+func add_item(item_id: String, amount: int, quality: String = "normal") -> bool:
 	var item = GameState.get_item_data(item_id)
 	if item == null:
 		return false
-	var result: Dictionary = inventory_logic.add_item(slots, item_id, amount, item.max_stack)
+	var result: Dictionary = inventory_logic.add_item(slots, item_id, amount, item.max_stack, quality)
 	slots = result["slots"]
 	inventory_changed.emit()
 	return int(result["leftover"]) == 0

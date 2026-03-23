@@ -23,6 +23,8 @@ NpcService="*res://scripts/autoload/npc_service.gd"
 QuestService="*res://scripts/autoload/quest_service.gd"
 ActionCoordinator="*res://scripts/autoload/action_coordinator.gd"
 UiSessionService="*res://scripts/autoload/ui_session_service.gd"
+CraftingService="*res://scripts/autoload/crafting_service.gd"
+MailService="*res://scripts/autoload/mail_service.gd"
 
 [display]
 

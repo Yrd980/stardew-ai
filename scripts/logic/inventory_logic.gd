@@ -4,7 +4,7 @@ extends RefCounted
 func empty_slots(size: int) -> Array:
 	var slots: Array = []
 	for _i in range(size):
-		slots.append({"item_id": "", "count": 0})
+		slots.append({"item_id": "", "count": 0, "quality": "normal"})
 	return slots
 
 
@@ -15,13 +15,15 @@ func clone_slots(slots: Array) -> Array:
 	return copy
 
 
-func add_item(slots: Array, item_id: String, amount: int, max_stack: int) -> Dictionary:
+func add_item(slots: Array, item_id: String, amount: int, max_stack: int, quality: String = "normal") -> Dictionary:
 	var next_slots: Array = clone_slots(slots)
 	var remaining: int = amount
 	for slot in next_slots:
 		if remaining <= 0:
 			break
 		if slot["item_id"] != item_id:
+			continue
+		if String(slot.get("quality", "normal")) != quality:
 			continue
 		var room: int = max_stack - int(slot["count"])
 		if room <= 0:
@@ -37,6 +39,7 @@ func add_item(slots: Array, item_id: String, amount: int, max_stack: int) -> Dic
 		var moved: int = min(max_stack, remaining)
 		slot["item_id"] = item_id
 		slot["count"] = moved
+		slot["quality"] = quality
 		remaining -= moved
 	return {"slots": next_slots, "leftover": remaining}
 
@@ -50,6 +53,7 @@ func remove_amount(slots: Array, index: int, amount: int) -> Array:
 	if next_count == 0:
 		slot["item_id"] = ""
 		slot["count"] = 0
+		slot["quality"] = "normal"
 	else:
 		slot["count"] = next_count
 	next_slots[index] = slot

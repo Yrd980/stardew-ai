@@ -2,6 +2,7 @@ extends "res://scripts/world/map_scene.gd"
 
 const DoorInteractable = preload("res://scripts/world/door_interactable.gd")
 const ShippingBinInteractable = preload("res://scripts/world/shipping_bin_interactable.gd")
+const ActionRequestInteractable = preload("res://scripts/world/action_request_interactable.gd")
 
 const FARMABLE_RECT := Rect2i(5, 10, 11, 6)
 
@@ -30,6 +31,8 @@ func _build_static_map() -> void:
 	collision_layer.set_cell(Vector2i(4, 7), TilePalette.SOURCE_ID, TilePalette.DOOR)
 	collision_layer.set_cell(Vector2i(22, 9), TilePalette.SOURCE_ID, TilePalette.DOOR)
 	decoration_layer.set_cell(Vector2i(7, 8), TilePalette.SOURCE_ID, TilePalette.BIN)
+	decoration_layer.set_cell(Vector2i(13, 8), TilePalette.SOURCE_ID, TilePalette.HOUSE_ACCENT)
+	decoration_layer.set_cell(Vector2i(15, 8), TilePalette.SOURCE_ID, TilePalette.BIN)
 	ground_layer.update_internals()
 	collision_layer.update_internals()
 	decoration_layer.update_internals()
@@ -66,3 +69,23 @@ func _build_interactables() -> void:
 	to_shop.destination_spawn_id = "from_farm"
 	to_shop.prompt = "Visit the seed shop"
 	interactables_root.add_child(to_shop)
+
+	var workbench := ActionRequestInteractable.new()
+	workbench.name = "Workbench"
+	workbench.position = cell_to_world(Vector2i(13, 8))
+	workbench.prompt = "Use the workbench"
+	workbench.request = {
+		"type": "open_crafting",
+		"message": "Workbench ready."
+	}
+	interactables_root.add_child(workbench)
+
+	var delivery_box := ActionRequestInteractable.new()
+	delivery_box.name = "DeliveryBox"
+	delivery_box.position = cell_to_world(Vector2i(15, 8))
+	delivery_box.prompt = "Check deliveries"
+	delivery_box.request = {
+		"type": "open_delivery",
+		"message": "Delivery box opened."
+	}
+	interactables_root.add_child(delivery_box)

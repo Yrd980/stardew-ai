@@ -65,7 +65,9 @@ func _use_selected_slot() -> void:
 	if current_map == null:
 		return
 	var target_cell := get_target_cell()
-	ActionCoordinator.use_selected_slot(current_map.map_id, target_cell, current_map.can_farm_cell(target_cell))
+	ActionCoordinator.use_selected_slot(current_map.map_id, target_cell, {
+		"can_farm_cell": current_map.can_farm_cell(target_cell)
+	})
 
 
 func _interact() -> void:
