@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="QuestData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/quest_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "11_big_ticket_delivery"
+title = "Big Ticket Delivery"
+description = "Mae wants two melons on the truck to prove the premium shelf was worth opening."
+giver_npc_id = "merchant"
+prerequisite_ids = Array[String](["10_keep_the_trellis_busy"])
+steps = [{
+"event_type": "shipment_settled",
+"target_id": "melon",
+"required_count": 2
+}]
+rewards = [{
+"money": 250
+}]

@@ -1,10 +1,13 @@
 extends Node
 
+const InventoryLogicScript = preload("res://scripts/logic/inventory_logic.gd")
+
 signal quest_log_changed
 
 var active_quests: Array[String] = []
 var completed_quests: Array[String] = []
 var quest_progress := {}
+var inventory_logic = InventoryLogicScript.new()
 
 
 func _ready() -> void:
@@ -101,13 +104,9 @@ func get_tracking_text() -> String:
 		return "Quest: %s" % quest_id
 	var state: Dictionary = quest_progress.get(quest_id, {})
 	if state.get("ready_to_turn_in", false):
-		return "Quest: %s (Talk to %s)" % [quest.title, quest.giver_npc_id.capitalize()]
-	var parts: Array = []
-	var counts: Array = state.get("step_counts", [])
-	for index in range(quest.steps.size()):
-		var step: Dictionary = quest.steps[index]
-		parts.append("%s/%s" % [int(counts[index]), int(step.get("required_count", 1))])
-	return "Quest: %s [%s]" % [quest.title, ", ".join(parts)]
+		var giver = GameState.get_npc_data(String(quest.giver_npc_id))
+		return "Quest: %s (Talk to %s)" % [quest.title, giver.display_name if giver else quest.giver_npc_id.capitalize()]
+	return "Quest: %s [%s]" % [quest.title, _summarize_steps(quest, state)]
 
 
 func _activate_quest(quest_id: String) -> void:
@@ -129,6 +128,8 @@ func _complete_quest(quest_id: String) -> Dictionary:
 	if quest == null:
 		return _result(true, "Quest complete.", 0, [{"type": "quest_completed", "quest_id": quest_id}])
 	var reward_summary := _grant_rewards(quest.rewards)
+	if not bool(reward_summary.get("success", true)):
+		return _result(false, String(reward_summary.get("message", "You cannot turn that in right now.")))
 	active_quests.erase(quest_id)
 	if not completed_quests.has(quest_id):
 		completed_quests.append(quest_id)
@@ -145,6 +146,12 @@ func _complete_quest(quest_id: String) -> Dictionary:
 
 
 func _grant_rewards(rewards: Array) -> Dictionary:
+	if not _can_grant_rewards(rewards):
+		return {
+			"success": false,
+			"rewards": [],
+			"message": "Inventory full. Make room before turning in this quest reward."
+		}
 	var granted: Array = []
 	var total_money := 0
 	for reward in rewards:
@@ -167,9 +174,27 @@ func _grant_rewards(rewards: Array) -> Dictionary:
 			var item = GameState.get_item_data(String(reward.get("item_id", "")))
 			parts.append("%s x%s" % [item.display_name if item else reward.get("item_id", ""), int(reward.get("count", 1))])
 	return {
+		"success": true,
 		"rewards": granted,
 		"message": "" if parts.is_empty() else "Rewards: %s." % ", ".join(parts)
 	}
+
+
+func _can_grant_rewards(rewards: Array) -> bool:
+	var simulated_slots: Array = inventory_logic.clone_slots(InventoryService.slots)
+	for reward in rewards:
+		if not reward.has("item_id"):
+			continue
+		var item_id := String(reward.get("item_id", ""))
+		var count := int(reward.get("count", 1))
+		var item = GameState.get_item_data(item_id)
+		if item == null:
+			return false
+		var result: Dictionary = inventory_logic.add_item(simulated_slots, item_id, count, int(item.max_stack))
+		if int(result.get("leftover", 0)) > 0:
+			return false
+		simulated_slots = result.get("slots", []).duplicate(true)
+	return true
 
 
 func _find_offerable_quest(npc_id: String) -> String:
@@ -237,7 +262,42 @@ func _build_progress_message(quest_id: String) -> String:
 	var state: Dictionary = quest_progress.get(quest_id, {})
 	if state.get("ready_to_turn_in", false):
 		return "You're ready to turn in %s." % quest.title
-	return "Working on %s." % quest.title
+	return "Working on %s: %s" % [quest.title, _summarize_steps(quest, state)]
+
+
+func _summarize_steps(quest, state: Dictionary) -> String:
+	var parts: Array[String] = []
+	var counts: Array = state.get("step_counts", [])
+	for index in range(quest.steps.size()):
+		var step: Dictionary = quest.steps[index]
+		parts.append("%s %s/%s" % [
+			_describe_step_target(step),
+			int(counts[index]),
+			int(step.get("required_count", 1))
+		])
+	return ", ".join(parts)
+
+
+func _describe_step_target(step: Dictionary) -> String:
+	var event_type := String(step.get("event_type", ""))
+	var target_id := String(step.get("target_id", ""))
+	match event_type:
+		"npc_talked_to":
+			var npc = GameState.get_npc_data(target_id)
+			return "Talk to %s" % (npc.display_name if npc else target_id.capitalize())
+		"shop_purchase_completed":
+			var item = GameState.get_item_data(target_id)
+			return "Buy %s" % (item.display_name if item else target_id)
+		"shipment_settled":
+			var shipped_item = GameState.get_item_data(target_id)
+			return "Ship %s" % (shipped_item.display_name if shipped_item else target_id)
+		"crop_harvested":
+			var harvested_item = GameState.get_item_data(target_id)
+			return "Harvest %s" % (harvested_item.display_name if harvested_item else target_id)
+		"shipment_value_recorded":
+			return "Ship value"
+		_:
+			return event_type.capitalize()
 
 
 func _result(success: bool, message: String, time_cost: int = 0, events: Array = [], directives: Dictionary = {}) -> Dictionary:
@@ -266,6 +326,9 @@ func _on_shipment_settled(summary: Dictionary) -> void:
 			"item_id": String(shipment.get("item_id", "")),
 			"count": int(shipment.get("count", 0))
 		})
+	var total_earned := int(summary.get("total_earned", 0))
+	if total_earned > 0:
+		record_event("shipment_value_recorded", {"count": total_earned})
 
 
 func _on_day_advanced(_day: int) -> void:

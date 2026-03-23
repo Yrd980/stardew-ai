@@ -13,6 +13,8 @@
 - [x] Add a second quest-giver NPC and broaden the quest chain
 - [x] Add save schema v3 defaults for economy progression data
 - [x] Move inventory/shop session state behind a dedicated UI session boundary
+- [x] Extend progression into tomato and melon content with shipment-value milestones
+- [x] Prevent quest turn-ins from consuming item rewards when the inventory cannot receive them
 
 ## Current Runtime Direction
 

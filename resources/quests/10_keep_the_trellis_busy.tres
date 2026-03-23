@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="QuestData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/quest_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "10_keep_the_trellis_busy"
+title = "Keep the Trellis Busy"
+description = "Rowan wants to see repeat harvests in action. Bring in 3 tomatoes from an active trellis crop."
+giver_npc_id = "rowan"
+prerequisite_ids = Array[String](["09_shipping_momentum"])
+steps = [{
+"event_type": "crop_harvested",
+"target_id": "tomato",
+"required_count": 3
+}]
+rewards = [{
+"money": 100
+}, {
+"item_id": "melon_seeds",
+"count": 2
+}]

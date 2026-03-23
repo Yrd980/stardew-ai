@@ -9,6 +9,7 @@ The repo currently reflects three implementation stages:
 - commit 1 established the farm-loop slice: farm and house maps, till/water/plant/grow/harvest/ship, and save/load
 - commit 2 expanded the runtime with service-layer farming, economy, NPC, and quest boundaries, plus a shop map, merchant schedule, starter quest chain, shipping settlement, and save schema updates
 - commit 3 broadened the shipped slice with additional crops, progressive shop stock, a second NPC quest giver, UI session state ownership, and richer economy persistence
+- the current post-commit-3 runtime deepens the progression chain with shipment-value milestones, safer quest reward turn-ins, and tomato/melon follow-up content
 
 The codebase should keep building on the service/resource structure rather than treating the repo as a blank farming prototype.
 
@@ -19,7 +20,7 @@ The codebase should keep building on the service/resource structure rather than 
 - tilling, watering, planting, overnight crop growth, harvesting, and shipping
 - merchant and field-planner NPC projection driven by daily schedules
 - shop stock that unlocks as quest milestones are completed
-- quest chains tied to talking, buying, harvesting, shipping, and repeat-harvest crop progression
+- quest chains tied to talking, buying, harvesting, shipping, shipment-value milestones, and repeat-harvest crop progression
 - save/load through `user://savegame.json` with save schema v3 migration defaults
 
 ## Layer Model
@@ -37,7 +38,7 @@ Autoloads own long-lived runtime state and most gameplay orchestration.
 - `FarmService`: farming actions and result/event dictionaries
 - `EconomyService`: money, shipping queue, shipment settlement, shipment history, and shop purchasing/unlock rules
 - `NpcService`: schedule-driven NPC projection state and interaction results
-- `QuestService`: quest activation, progress tracking, completion, and rewards
+- `QuestService`: quest activation, progress tracking, completion, and rewards, including reward-capacity checks before a turn-in finalizes
 - `ActionCoordinator`: user-intent entrypoint that applies shared side effects like time, map changes, save triggers, messages, and shop directives
 - `UiSessionService`: inventory/shop session ownership so HUD stays a projection layer
 
@@ -58,7 +59,7 @@ Keep calculations here when they do not need live scene nodes or autoload state 
 - items and crops
 - NPC definitions and schedules
 - shop stock data with progression gates
-- quest chain definitions
+- quest chain definitions for item-count and shipment-value milestones
 
 Gameplay expansion should prefer new data resources over hardcoding content in scene or entity scripts.
 
@@ -132,11 +133,11 @@ Feature-specific fields are acceptable when the caller genuinely needs them, but
 ## Known Limits
 
 - placeholder visuals are still used throughout the project
-- the game is still a compact vertical slice even after adding more crops, progression gates, and a second quest-giver NPC
+- the game is still a compact vertical slice even after adding more crops, progression gates, shipment-value progression, and a second quest-giver NPC
 - stamina, weather, seasons, and broader world simulation are not implemented yet
 
 ## Verified Commands
 
     godot --path /home/yrd/projects/stardew-ai
     godot --headless --path /home/yrd/projects/stardew-ai --quit
-    timeout 3 godot --headless --path /home/yrd/projects/stardew-ai
+    timeout 5 godot --headless --path /home/yrd/projects/stardew-ai

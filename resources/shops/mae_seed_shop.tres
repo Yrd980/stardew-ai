@@ -26,11 +26,25 @@ stock = [{
 "min_day": 5,
 "required_completed_quest": "05_harvest_hearty_roots"
 }, {
-"item_id": "blueberry_seeds",
-"price": 80,
-"daily_limit": 2,
-"restock_daily": true,
-"min_day": 6,
-"required_completed_quest": "06_ship_market_favorite"
+	"item_id": "blueberry_seeds",
+	"price": 80,
+	"daily_limit": 2,
+	"restock_daily": true,
+	"min_day": 6,
+	"required_completed_quest": "06_ship_market_favorite"
+	}, {
+	"item_id": "tomato_seeds",
+	"price": 90,
+	"daily_limit": 2,
+	"restock_daily": true,
+	"min_day": 8,
+	"required_completed_quest": "09_shipping_momentum"
+	}, {
+	"item_id": "melon_seeds",
+	"price": 140,
+	"daily_limit": 2,
+	"restock_daily": true,
+	"min_day": 10,
+	"required_completed_quest": "10_keep_the_trellis_busy"
 }]
 greeting = "Fresh seeds, fair prices, and a few premium shelves for farmers who can keep up."

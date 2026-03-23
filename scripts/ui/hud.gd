@@ -149,7 +149,7 @@ func _refresh_shop() -> void:
 	var active_shopkeeper_id := UiSessionService.get_active_shopkeeper_id()
 	if not active_shopkeeper_id.is_empty() and not NpcService.is_shop_open(active_shop_id, active_shopkeeper_id):
 		UiSessionService.close_shop()
-		push_message("Mae has stepped away from the counter.")
+		push_message("%s has stepped away from the counter." % _get_shopkeeper_name(active_shopkeeper_id))
 		return
 	var shop = GameState.get_shop_data(active_shop_id)
 	if shop == null:
@@ -197,6 +197,11 @@ func _buy_shop_index(index: int) -> void:
 	var entry: Dictionary = visible_stock[index]
 	ActionCoordinator.purchase_shop_item(active_shop_id, String(entry.get("item_id", "")), 1, active_shopkeeper_id)
 	_refresh_all()
+
+
+func _get_shopkeeper_name(npc_id: String) -> String:
+	var npc = GameState.get_npc_data(npc_id)
+	return npc.display_name if npc else npc_id.capitalize()
 
 
 func _on_runtime_changed(_day: int, _time_minutes: int) -> void:

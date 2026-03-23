@@ -10,7 +10,7 @@ This repository currently ships a playable backend-first vertical slice with a b
 - next-day settlement with money tracking and shipment history
 - merchant and field-planner NPC schedule projection
 - progressive shop stock that unlocks as quest milestones are completed
-- quest chains tied to talking, buying seeds, harvesting produce, shipping crops, and regrowing berries
+- quest chains tied to talking, buying seeds, harvesting produce, shipping crops, regrowing vines, and higher-value overnight shipments
 - save/load through `user://savegame.json`
 
 ## Controls
@@ -47,9 +47,16 @@ The current implementation is intentionally thin in presentation but structured 
 - dynamic soil and crop state is stored by `map_id + tile coordinate`
 - map ownership is routed through `SceneRouter`, while world save data only stores durable simulation state
 - money, shipping, stock unlocks, and shipment history are owned by `EconomyService`
+- quest turn-ins protect item rewards instead of silently consuming them when the inventory is full
 - NPC projection is schedule-derived at runtime instead of persisted directly
 - farming, economy, NPC, and quest flows route through dedicated services with a shared action-result envelope
 - the project uses runtime-generated placeholder tiles instead of final art
+
+## Current Progression
+
+- Mae's stock now steps from parsnips into potatoes, cauliflower, blueberries, tomatoes, and melons
+- Rowan's field-planning quest chain now continues past first regrowth into repeat-yield tomato work and premium melon deliveries
+- overnight shipping progress now tracks both item counts and higher-value settlement milestones
 
 ## Verification
 
@@ -57,7 +64,7 @@ The current baseline is verified through real runtime boot:
 
     godot --path /home/yrd/projects/stardew-ai
     godot --headless --path /home/yrd/projects/stardew-ai --quit
-    timeout 3 godot --headless --path /home/yrd/projects/stardew-ai
+    timeout 5 godot --headless --path /home/yrd/projects/stardew-ai
 
 ## Docs
 

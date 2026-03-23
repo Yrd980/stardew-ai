@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="QuestData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/quest_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "09_shipping_momentum"
+title = "Shipping Momentum"
+description = "Mae wants proof that your overnight box can clear a serious batch. Earn 400g from one night's shipments."
+giver_npc_id = "merchant"
+prerequisite_ids = Array[String](["08_first_regrowth"])
+steps = [{
+"event_type": "shipment_value_recorded",
+"required_count": 400
+}]
+rewards = [{
+"money": 75
+}, {
+"item_id": "tomato_seeds",
+"count": 2
+}]
