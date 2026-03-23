@@ -10,7 +10,7 @@ const NPC_DIR := "res://resources/npcs"
 const SCHEDULE_DIR := "res://resources/schedules"
 const SHOP_DIR := "res://resources/shops"
 const QUEST_DIR := "res://resources/quests"
-const CURRENT_SAVE_VERSION := 2
+const CURRENT_SAVE_VERSION := 3
 
 var item_defs := {}
 var tool_defs := {}

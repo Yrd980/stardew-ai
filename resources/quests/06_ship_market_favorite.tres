@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="QuestData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/quest_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "06_ship_market_favorite"
+title = "Ship a Market Favorite"
+description = "Ship 2 cauliflowers to show the valley can grow premium produce."
+giver_npc_id = "rowan"
+prerequisite_ids = Array[String](["05_harvest_hearty_roots"])
+steps = [{
+"event_type": "shipment_settled",
+"target_id": "cauliflower",
+"required_count": 2
+}]
+rewards = [{
+"money": 150
+}]

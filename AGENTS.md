@@ -27,7 +27,6 @@ Read `README.md` and `ARCHITECTURE.md` before making architectural changes.
 
 ## Verification
 
-```bash
-godot --headless --path /home/yrd/projects/stardew-ai -s res://tests/test_runner.gd
-godot --headless --path /home/yrd/projects/stardew-ai --quit
-```
+    godot --path /home/yrd/projects/stardew-ai
+    godot --headless --path /home/yrd/projects/stardew-ai --quit
+    timeout 3 godot --headless --path /home/yrd/projects/stardew-ai

@@ -144,7 +144,11 @@ func harvest_crop(map_id: String, cell: Vector2i) -> String:
 	var key := _cell_key(cell)
 	var crop_state: Dictionary = get_crops(map_id)[key]
 	var crop_def = GameState.get_crop_data(String(crop_state.get("crop_id", "")))
-	get_crops(map_id).erase(key)
+	if crop_def != null and int(crop_def.regrow_days) > 0:
+		crop_state["days_watered"] = max(0, crop_logic.get_total_growth_days(crop_def) - int(crop_def.regrow_days))
+		get_crops(map_id)[key] = crop_state
+	else:
+		get_crops(map_id).erase(key)
 	world_changed.emit(map_id)
 	return crop_def.harvest_item_id
 

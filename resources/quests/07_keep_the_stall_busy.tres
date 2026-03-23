@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="QuestData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/quest_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "07_keep_the_stall_busy"
+title = "Keep the Stall Busy"
+description = "Buy 2 blueberry seed packs from Mae once the premium shelf opens up."
+giver_npc_id = "merchant"
+prerequisite_ids = Array[String](["06_ship_market_favorite"])
+steps = [{
+"event_type": "shop_purchase_completed",
+"target_id": "blueberry_seeds",
+"required_count": 2
+}]
+rewards = [{
+"money": 60
+}]

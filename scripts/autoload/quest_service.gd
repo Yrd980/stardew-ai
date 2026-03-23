@@ -43,8 +43,7 @@ func build_save_data() -> Dictionary:
 func handle_npc_interaction(npc_id: String) -> Dictionary:
 	var ready_quest_id := _find_ready_to_turn_in(npc_id)
 	if not ready_quest_id.is_empty():
-		var reward_message := _complete_quest(ready_quest_id)
-		return {"message": reward_message, "events": [{"type": "quest_completed", "quest_id": ready_quest_id}]}
+		return _complete_quest(ready_quest_id)
 	var offered_quest_id := _find_offerable_quest(npc_id)
 	if not offered_quest_id.is_empty():
 		_activate_quest(offered_quest_id)
@@ -54,13 +53,17 @@ func handle_npc_interaction(npc_id: String) -> Dictionary:
 		var accepted_message := "Quest started: %s." % (quest.title if quest else offered_quest_id)
 		if progress_state.get("ready_to_turn_in", false):
 			accepted_message += " Talk again to turn it in."
-		return {"message": accepted_message, "events": [{"type": "quest_accepted", "quest_id": offered_quest_id}]}
+		return _result(true, accepted_message, 0, [{"type": "quest_accepted", "quest_id": offered_quest_id}])
 	record_event("npc_talked_to", {"npc_id": npc_id})
 	var active_quest_id := _find_active_quest_for_npc(npc_id)
 	if not active_quest_id.is_empty():
-		return {"message": _build_progress_message(active_quest_id), "events": []}
+		return _result(true, _build_progress_message(active_quest_id))
 	var npc = GameState.get_npc_data(npc_id)
-	return {"message": npc.default_dialogue if npc else "Hello there.", "events": []}
+	return _result(true, npc.default_dialogue if npc else "Hello there.")
+
+
+func has_completed_quest(quest_id: String) -> bool:
+	return completed_quests.has(quest_id)
 
 
 func record_event(event_type: String, payload: Dictionary) -> void:
@@ -121,28 +124,52 @@ func _activate_quest(quest_id: String) -> void:
 	quest_log_changed.emit()
 
 
-func _complete_quest(quest_id: String) -> String:
+func _complete_quest(quest_id: String) -> Dictionary:
 	var quest = GameState.get_quest_data(quest_id)
 	if quest == null:
-		return "Quest complete."
-	_grant_rewards(quest.rewards)
+		return _result(true, "Quest complete.", 0, [{"type": "quest_completed", "quest_id": quest_id}])
+	var reward_summary := _grant_rewards(quest.rewards)
 	active_quests.erase(quest_id)
 	if not completed_quests.has(quest_id):
 		completed_quests.append(quest_id)
 	quest_progress.erase(quest_id)
 	quest_log_changed.emit()
-	return "Quest complete: %s." % quest.title
+	var message := "Quest complete: %s." % quest.title
+	if not reward_summary.is_empty():
+		message += " %s" % reward_summary.get("message", "")
+	return _result(true, message, 0, [{
+		"type": "quest_completed",
+		"quest_id": quest_id,
+		"rewards": reward_summary.get("rewards", [])
+	}])
 
 
-func _grant_rewards(rewards: Array) -> void:
+func _grant_rewards(rewards: Array) -> Dictionary:
+	var granted: Array = []
+	var total_money := 0
 	for reward in rewards:
 		if reward.has("money"):
-			EconomyService.add_money(int(reward.get("money", 0)))
+			var amount := int(reward.get("money", 0))
+			EconomyService.add_money(amount)
+			total_money += amount
+			granted.append({"money": amount})
 		elif reward.has("item_id"):
 			var item_id := String(reward.get("item_id", ""))
 			var count := int(reward.get("count", 1))
 			if InventoryService.can_add_item(item_id, count):
 				InventoryService.add_item(item_id, count)
+				granted.append({"item_id": item_id, "count": count})
+	var parts: Array[String] = []
+	if total_money > 0:
+		parts.append("%sg" % total_money)
+	for reward in granted:
+		if reward.has("item_id"):
+			var item = GameState.get_item_data(String(reward.get("item_id", "")))
+			parts.append("%s x%s" % [item.display_name if item else reward.get("item_id", ""), int(reward.get("count", 1))])
+	return {
+		"rewards": granted,
+		"message": "" if parts.is_empty() else "Rewards: %s." % ", ".join(parts)
+	}
 
 
 func _find_offerable_quest(npc_id: String) -> String:
@@ -211,6 +238,16 @@ func _build_progress_message(quest_id: String) -> String:
 	if state.get("ready_to_turn_in", false):
 		return "You're ready to turn in %s." % quest.title
 	return "Working on %s." % quest.title
+
+
+func _result(success: bool, message: String, time_cost: int = 0, events: Array = [], directives: Dictionary = {}) -> Dictionary:
+	return {
+		"success": success,
+		"message": message,
+		"time_cost": time_cost,
+		"events": events,
+		"directives": directives
+	}
 
 
 func _on_crop_harvested(event: Dictionary) -> void:

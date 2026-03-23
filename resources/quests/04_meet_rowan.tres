@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="QuestData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/quest_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "04_meet_rowan"
+title = "Meet Rowan"
+description = "Find Rowan around the valley and hear what a bigger field operation needs next."
+giver_npc_id = "rowan"
+prerequisite_ids = Array[String](["03_ship_first_crop"])
+steps = [{
+"event_type": "npc_talked_to",
+"target_id": "rowan",
+"required_count": 1
+}]
+rewards = [{
+"item_id": "potato_seeds",
+"count": 3
+}]

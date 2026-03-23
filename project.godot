@@ -22,6 +22,7 @@ EconomyService="*res://scripts/autoload/economy_service.gd"
 NpcService="*res://scripts/autoload/npc_service.gd"
 QuestService="*res://scripts/autoload/quest_service.gd"
 ActionCoordinator="*res://scripts/autoload/action_coordinator.gd"
+UiSessionService="*res://scripts/autoload/ui_session_service.gd"
 
 [display]
 

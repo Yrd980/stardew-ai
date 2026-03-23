@@ -16,7 +16,7 @@ func _ready() -> void:
 
 
 func _physics_process(_delta: float) -> void:
-	if hud != null and hud.has_method("is_modal_open") and hud.is_modal_open():
+	if UiSessionService.is_modal_open():
 		hud.handle_modal_input()
 		velocity = Vector2.ZERO
 		return
@@ -51,8 +51,8 @@ func _handle_selection_input() -> void:
 
 
 func _handle_action_input() -> void:
-	if Input.is_action_just_pressed("toggle_inventory") and hud != null:
-		hud.toggle_inventory()
+	if Input.is_action_just_pressed("toggle_inventory"):
+		UiSessionService.toggle_inventory()
 	if Input.is_action_just_pressed("save_game"):
 		ActionCoordinator.save_game(SceneRouter.current_map_id, global_position)
 	if Input.is_action_just_pressed("use_tool"):

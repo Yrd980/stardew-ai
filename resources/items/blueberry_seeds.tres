@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "blueberry_seeds"
+display_name = "Blueberry Seeds"
+kind = "seed"
+max_stack = 99
+sell_price = 0
+crop_id = "blueberry_crop"
+description = "A pricier berry starter that regrows after each harvest."

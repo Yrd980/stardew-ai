@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="QuestData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/quest_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "08_first_regrowth"
+title = "First Regrowth"
+description = "Harvest 2 blueberries after the bushes start producing on repeat."
+giver_npc_id = "rowan"
+prerequisite_ids = Array[String](["07_keep_the_stall_busy"])
+steps = [{
+"event_type": "crop_harvested",
+"target_id": "blueberry",
+"required_count": 2
+}]
+rewards = [{
+"money": 120
+}]

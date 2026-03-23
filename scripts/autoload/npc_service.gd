@@ -99,16 +99,16 @@ func interact_with_npc(npc_id: String) -> Dictionary:
 	var state := get_npc_state(npc_id)
 	var interaction_mode := String(state.get("interaction_mode", "talk"))
 	var open_shop := interaction_mode == "shop" and not String(npc.shop_id).is_empty()
-	var directives := {}
+	var directives: Dictionary = quest_result.get("directives", {}).duplicate(true)
 	if open_shop:
 		directives["open_shop"] = {
 			"shop_id": String(npc.shop_id),
 			"npc_id": npc_id
 		}
 	return _result(
-		true,
+		bool(quest_result.get("success", true)),
 		String(quest_result.get("message", npc.default_dialogue if not String(npc.default_dialogue).is_empty() else "%s nods at you." % npc.display_name)),
-		0,
+		int(quest_result.get("time_cost", 0)),
 		quest_result.get("events", []),
 		directives
 	)

@@ -1,9 +1,6 @@
 extends Control
 
-var inventory_open := false
 var message_timer := 0.0
-var active_shop_id := ""
-var active_shopkeeper_id := ""
 
 @onready var status_label: Label = $TopBar/StatusLabel
 @onready var help_label: Label = $TopBar/HelpLabel
@@ -35,10 +32,8 @@ func _ready() -> void:
 		EconomyService.pending_shipments_changed.connect(_on_shipments_changed)
 	if not ActionCoordinator.message_requested.is_connected(push_message):
 		ActionCoordinator.message_requested.connect(push_message)
-	if not ActionCoordinator.shop_requested.is_connected(open_shop):
-		ActionCoordinator.shop_requested.connect(open_shop)
-	if not ActionCoordinator.shop_close_requested.is_connected(close_shop):
-		ActionCoordinator.shop_close_requested.connect(close_shop)
+	if not UiSessionService.session_changed.is_connected(_on_session_changed):
+		UiSessionService.session_changed.connect(_on_session_changed)
 	_refresh_all()
 
 
@@ -50,12 +45,7 @@ func _process(delta: float) -> void:
 
 
 func toggle_inventory() -> void:
-	if is_modal_open():
-		close_shop()
-		return
-	inventory_open = not inventory_open
-	inventory_panel.visible = inventory_open
-	_refresh_inventory()
+	UiSessionService.toggle_inventory()
 
 
 func push_message(message: String) -> void:
@@ -64,14 +54,14 @@ func push_message(message: String) -> void:
 
 
 func is_modal_open() -> bool:
-	return shop_panel.visible
+	return UiSessionService.is_modal_open()
 
 
 func handle_modal_input() -> void:
 	if not is_modal_open():
 		return
 	if Input.is_action_just_pressed("cancel_modal") or Input.is_action_just_pressed("toggle_inventory"):
-		close_shop()
+		UiSessionService.close_shop()
 		return
 	for index in range(GameState.HOTBAR_SLOTS):
 		if Input.is_action_just_pressed("slot_%s" % (index + 1)):
@@ -80,22 +70,11 @@ func handle_modal_input() -> void:
 
 
 func open_shop(shop_id: String, npc_id: String = "") -> void:
-	if shop_id.is_empty():
-		return
-	active_shop_id = shop_id
-	active_shopkeeper_id = npc_id
-	shop_panel.visible = true
-	inventory_open = false
-	inventory_panel.visible = false
-	_refresh_help()
-	_refresh_shop()
+	UiSessionService.open_shop(shop_id, npc_id)
 
 
 func close_shop() -> void:
-	active_shop_id = ""
-	active_shopkeeper_id = ""
-	shop_panel.visible = false
-	_refresh_help()
+	UiSessionService.close_shop()
 
 
 func _refresh_all() -> void:
@@ -114,6 +93,8 @@ func _refresh_status() -> void:
 		EconomyService.money,
 		SceneRouter.current_map_id.capitalize()
 	]
+	if EconomyService.lifetime_earnings > 0:
+		status_label.text += "  Earned %sg" % EconomyService.lifetime_earnings
 
 
 func _refresh_help() -> void:
@@ -152,6 +133,7 @@ func _refresh_inventory() -> void:
 			label = "%s x%s" % [item.display_name if item else item_id, int(slot.get("count", 0))]
 		lines.append("%s. %s" % [index + 1, label])
 	inventory_label.text = "\n".join(lines)
+	inventory_panel.visible = UiSessionService.is_inventory_open()
 
 
 func _refresh_quest() -> void:
@@ -160,9 +142,13 @@ func _refresh_quest() -> void:
 
 func _refresh_shop() -> void:
 	if not is_modal_open():
+		shop_panel.visible = false
 		return
+	shop_panel.visible = true
+	var active_shop_id := UiSessionService.get_active_shop_id()
+	var active_shopkeeper_id := UiSessionService.get_active_shopkeeper_id()
 	if not active_shopkeeper_id.is_empty() and not NpcService.is_shop_open(active_shop_id, active_shopkeeper_id):
-		close_shop()
+		UiSessionService.close_shop()
 		push_message("Mae has stepped away from the counter.")
 		return
 	var shop = GameState.get_shop_data(active_shop_id)
@@ -173,8 +159,9 @@ func _refresh_shop() -> void:
 	if not String(shop.greeting).is_empty():
 		lines.append(shop.greeting)
 	lines.append("")
-	for index in range(shop.stock.size()):
-		var entry: Dictionary = shop.stock[index]
+	var visible_stock := EconomyService.get_available_shop_stock(active_shop_id)
+	for index in range(visible_stock.size()):
+		var entry: Dictionary = visible_stock[index]
 		var item_id := String(entry.get("item_id", ""))
 		var item = GameState.get_item_data(item_id)
 		var purchased := EconomyService.get_purchase_count(active_shop_id, item_id)
@@ -186,19 +173,28 @@ func _refresh_shop() -> void:
 			int(entry.get("price", 0)),
 			remaining_text
 		])
+	for entry in shop.stock:
+		if EconomyService.is_stock_entry_available(entry):
+			continue
+		var item_id := String(entry.get("item_id", ""))
+		var item = GameState.get_item_data(item_id)
+		lines.append("- %s  %s" % [
+			item.display_name if item else item_id,
+			EconomyService.describe_stock_requirement(entry)
+		])
 	lines.append("")
 	lines.append("Money: %sg" % EconomyService.money)
-	lines.append("Press 1-%s to buy one item." % min(GameState.HOTBAR_SLOTS, shop.stock.size()))
+	lines.append("Press 1-%s to buy one item." % min(GameState.HOTBAR_SLOTS, visible_stock.size()))
 	shop_label.text = "\n".join(lines)
 
 
 func _buy_shop_index(index: int) -> void:
-	var shop = GameState.get_shop_data(active_shop_id)
-	if shop == null:
+	var active_shop_id := UiSessionService.get_active_shop_id()
+	var active_shopkeeper_id := UiSessionService.get_active_shopkeeper_id()
+	var visible_stock := EconomyService.get_available_shop_stock(active_shop_id)
+	if index < 0 or index >= visible_stock.size():
 		return
-	if index < 0 or index >= shop.stock.size():
-		return
-	var entry: Dictionary = shop.stock[index]
+	var entry: Dictionary = visible_stock[index]
 	ActionCoordinator.purchase_shop_item(active_shop_id, String(entry.get("item_id", "")), 1, active_shopkeeper_id)
 	_refresh_all()
 
@@ -214,7 +210,7 @@ func _on_money_changed(_amount: int) -> void:
 
 func _on_inventory_changed() -> void:
 	_refresh_hotbar()
-	if inventory_open:
+	if UiSessionService.is_inventory_open():
 		_refresh_inventory()
 
 
@@ -231,4 +227,10 @@ func _on_quest_changed() -> void:
 
 
 func _on_shipments_changed() -> void:
+	_refresh_shop()
+
+
+func _on_session_changed() -> void:
+	_refresh_help()
+	_refresh_inventory()
 	_refresh_shop()

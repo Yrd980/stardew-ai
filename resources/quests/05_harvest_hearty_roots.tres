@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="QuestData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/quest_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "05_harvest_hearty_roots"
+title = "Harvest Hearty Roots"
+description = "Harvest 3 potatoes for Rowan to prove the field can support sturdier crops."
+giver_npc_id = "rowan"
+prerequisite_ids = Array[String](["04_meet_rowan"])
+steps = [{
+"event_type": "crop_harvested",
+"target_id": "potato",
+"required_count": 3
+}]
+rewards = [{
+"money": 75
+}, {
+"item_id": "cauliflower_seeds",
+"count": 2
+}]

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="NpcData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/npc_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "rowan"
+display_name = "Rowan"
+home_map_id = "farm"
+schedule_id = "rowan_daily"
+default_dialogue = "Rowan studies your fields like every seed is a business plan waiting to happen."
+shop_id = ""

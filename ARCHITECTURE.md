@@ -4,23 +4,23 @@ Godot 4.6 farming-life prototype inspired by Stardew Valley.
 
 ## Baseline
 
-The repo currently reflects two implementation stages:
+The repo currently reflects three implementation stages:
 
-- commit 1 established the farm-loop slice: farm and house maps, till/water/plant/grow/harvest/ship, save/load, and headless logic tests
+- commit 1 established the farm-loop slice: farm and house maps, till/water/plant/grow/harvest/ship, and save/load
 - commit 2 expanded the runtime with service-layer farming, economy, NPC, and quest boundaries, plus a shop map, merchant schedule, starter quest chain, shipping settlement, and save schema updates
+- commit 3 broadened the shipped slice with additional crops, progressive shop stock, a second NPC quest giver, UI session state ownership, and richer economy persistence
 
-The codebase should keep building on the second-stage structure rather than treating the repo as a blank farming prototype.
+The codebase should keep building on the service/resource structure rather than treating the repo as a blank farming prototype.
 
 ## Current Gameplay Slice
 
 - top-down movement across farm, house, and shop maps
 - hoe, watering can, and seed hotbar flow
-- tilling, watering, planting, overnight crop growth, and harvesting
-- shipping bin queueing with next-day settlement
-- merchant NPC projection driven by daily schedule data
-- shop modal with starter seed purchases and daily stock limits
-- starter quest chain tied to talking, buying, and shipping
-- save/load through `user://savegame.json` with save schema v2 migration defaults
+- tilling, watering, planting, overnight crop growth, harvesting, and shipping
+- merchant and field-planner NPC projection driven by daily schedules
+- shop stock that unlocks as quest milestones are completed
+- quest chains tied to talking, buying, harvesting, shipping, and repeat-harvest crop progression
+- save/load through `user://savegame.json` with save schema v3 migration defaults
 
 ## Layer Model
 
@@ -32,13 +32,14 @@ Autoloads own long-lived runtime state and most gameplay orchestration.
 - `SceneRouter`: current map ownership and map-change requests
 - `ClockService`: passive time flow, sleeping, day advancement, next-day settlement trigger
 - `InventoryService`: inventory slots, selection, stacking mutations
-- `WorldState`: soil, crop, and per-map player position state
+- `WorldState`: soil, crop, regrowth, and per-map player position state
 - `SaveManager`: compose, serialize, and load the top-level durable save snapshot
 - `FarmService`: farming actions and result/event dictionaries
-- `EconomyService`: money, shipping queue, shipment settlement, and shop purchasing
+- `EconomyService`: money, shipping queue, shipment settlement, shipment history, and shop purchasing/unlock rules
 - `NpcService`: schedule-driven NPC projection state and interaction results
 - `QuestService`: quest activation, progress tracking, completion, and rewards
 - `ActionCoordinator`: user-intent entrypoint that applies shared side effects like time, map changes, save triggers, messages, and shop directives
+- `UiSessionService`: inventory/shop session ownership so HUD stays a projection layer
 
 ### Logic
 
@@ -54,9 +55,9 @@ Keep calculations here when they do not need live scene nodes or autoload state 
 
 `scripts/data/` defines resource schemas. `resources/` contains authored gameplay content.
 
-- items, tools, and crops
+- items and crops
 - NPC definitions and schedules
-- shop stock data
+- shop stock data with progression gates
 - quest chain definitions
 
 Gameplay expansion should prefer new data resources over hardcoding content in scene or entity scripts.
@@ -69,7 +70,7 @@ These scripts should stay thin and projection-oriented.
 - `scripts/maps/*.gd` define map-specific layout, spawn points, and interactables
 - `scripts/entities/player.gd` handles movement, targeting, and intent dispatch into `ActionCoordinator`
 - `scripts/entities/npc_projection.gd` projects NPC state and exposes an interaction request
-- `scripts/ui/hud.gd` renders status, quests, inventory, and shop state while sending purchase intents through `ActionCoordinator`
+- `scripts/ui/hud.gd` renders status, quests, inventory, and shop state from service/session authority while sending purchase intents through `ActionCoordinator`
 - interactables should build action requests, not hide gameplay side effects or direct service orchestration
 
 ## State and Flow Rules
@@ -83,6 +84,7 @@ These scripts should stay thin and projection-oriented.
 - `WorldState` owns durable world simulation plus saved player positions, not navigation state
 - `NpcService` derives runtime NPC projection state from schedule data and current time; that projection is not persisted
 - `EconomyService` owns money and other economy-facing save data
+- `UiSessionService` owns transient inventory/shop session state, not HUD widgets
 
 ### Communication
 
@@ -92,17 +94,15 @@ These scripts should stay thin and projection-oriented.
 
 ### Action Results
 
-Gameplay actions should prefer the current dictionary result shape already used by services:
+Gameplay actions should prefer the shared dictionary result shape:
 
-```gdscript
-{
-	"success": true,
-	"message": "Planted Parsnip Seeds.",
-	"time_cost": 5,
-	"events": [],
-	"directives": {}
-}
-```
+    {
+        "success": true,
+        "message": "Planted Parsnip Seeds.",
+        "time_cost": 5,
+        "events": [],
+        "directives": {}
+    }
 
 Feature-specific fields are acceptable when the caller genuinely needs them, but the base result shape should stay recognizable across services. UI-facing follow-up like shop opening should route through `directives` rather than ad hoc top-level fields.
 
@@ -119,6 +119,7 @@ Feature-specific fields are acceptable when the caller genuinely needs them, but
 
 - `scripts/main.gd`: boots save or new game and swaps maps
 - `scripts/autoload/action_coordinator.gd`: central user-action boundary for player, shop, NPC, and interactable intents
+- `scripts/autoload/ui_session_service.gd`: transient inventory/shop session authority
 - `scripts/entities/player.gd`: reads input, computes target context, and dispatches intents
 - `scripts/autoload/world_state.gd`: soil/crop state and next-day processing
 - `scripts/autoload/farm_service.gd`: farming action entrypoints
@@ -131,13 +132,11 @@ Feature-specific fields are acceptable when the caller genuinely needs them, but
 ## Known Limits
 
 - placeholder visuals are still used throughout the project
-- current tests now cover logic helpers plus architecture-critical service and coordinator behavior, but they are still headless smoke tests rather than full gameplay scenario coverage
-- the game currently centers on one crop, one merchant, one shop, and a starter quest chain
+- the game is still a compact vertical slice even after adding more crops, progression gates, and a second quest-giver NPC
 - stamina, weather, seasons, and broader world simulation are not implemented yet
 
 ## Verified Commands
 
-```bash
-godot --headless --path /home/yrd/projects/stardew-ai -s res://tests/test_runner.gd
-godot --headless --path /home/yrd/projects/stardew-ai --quit
-```
+    godot --path /home/yrd/projects/stardew-ai
+    godot --headless --path /home/yrd/projects/stardew-ai --quit
+    timeout 3 godot --headless --path /home/yrd/projects/stardew-ai

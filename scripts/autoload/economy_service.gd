@@ -9,6 +9,8 @@ var money := GameState.STARTING_MONEY
 var pending_shipments: Array = []
 var shop_purchase_counts := {}
 var last_settlement_summary := {}
+var lifetime_earnings := 0
+var shipment_history: Array = []
 
 
 func reset_state() -> void:
@@ -16,6 +18,8 @@ func reset_state() -> void:
 	pending_shipments = []
 	shop_purchase_counts = {}
 	last_settlement_summary = {}
+	lifetime_earnings = 0
+	shipment_history = []
 	money_changed.emit(money)
 	pending_shipments_changed.emit()
 
@@ -25,6 +29,8 @@ func load_state(payload: Dictionary) -> void:
 	pending_shipments = payload.get("pending_shipments", []).duplicate(true)
 	shop_purchase_counts = payload.get("shop_purchase_counts", {}).duplicate(true)
 	last_settlement_summary = payload.get("last_settlement_summary", {}).duplicate(true)
+	lifetime_earnings = int(payload.get("lifetime_earnings", 0))
+	shipment_history = payload.get("shipment_history", []).duplicate(true)
 	money_changed.emit(money)
 	pending_shipments_changed.emit()
 
@@ -34,7 +40,9 @@ func build_save_data() -> Dictionary:
 		"money": money,
 		"pending_shipments": pending_shipments.duplicate(true),
 		"shop_purchase_counts": shop_purchase_counts.duplicate(true),
-		"last_settlement_summary": last_settlement_summary.duplicate(true)
+		"last_settlement_summary": last_settlement_summary.duplicate(true),
+		"lifetime_earnings": lifetime_earnings,
+		"shipment_history": shipment_history.duplicate(true)
 	}
 
 
@@ -71,18 +79,22 @@ func queue_selected_stack_for_shipping() -> Dictionary:
 
 func settle_pending_shipments() -> Dictionary:
 	var total_earned := 0
-	var lines: Array = []
 	for shipment in pending_shipments:
 		total_earned += int(shipment.get("total_price", 0))
-		lines.append("%s x%s" % [String(shipment.get("item_id", "")), int(shipment.get("count", 0))])
 	if total_earned > 0:
 		add_money(total_earned)
+		lifetime_earnings += total_earned
 	var summary := {
 		"total_earned": total_earned,
 		"shipments": pending_shipments.duplicate(true),
-		"line_count": pending_shipments.size()
+		"line_count": pending_shipments.size(),
+		"day": ClockService.day
 	}
 	last_settlement_summary = summary
+	if total_earned > 0:
+		shipment_history.append(summary.duplicate(true))
+		if shipment_history.size() > 10:
+			shipment_history = shipment_history.slice(shipment_history.size() - 10, shipment_history.size())
 	pending_shipments = []
 	shop_purchase_counts = {}
 	pending_shipments_changed.emit()
@@ -99,6 +111,8 @@ func purchase_item(shop_id: String, item_id: String, quantity: int = 1) -> Dicti
 	var stock_entry := _find_stock_entry(shop, item_id)
 	if stock_entry.is_empty():
 		return _result(false, "That item is not sold here.")
+	if not is_stock_entry_available(stock_entry):
+		return _result(false, _get_stock_lock_message(stock_entry))
 	var unit_price := int(stock_entry.get("price", 0))
 	var daily_limit := int(stock_entry.get("daily_limit", 0))
 	var purchased_today := _get_daily_purchase_count(shop_id, item_id)
@@ -128,11 +142,50 @@ func get_purchase_count(shop_id: String, item_id: String) -> int:
 	return _get_daily_purchase_count(shop_id, item_id)
 
 
+func get_available_shop_stock(shop_id: String) -> Array:
+	var shop = GameState.get_shop_data(shop_id)
+	if shop == null:
+		return []
+	var visible: Array = []
+	for entry in shop.stock:
+		if is_stock_entry_available(entry):
+			visible.append(entry)
+	return visible
+
+
+func is_stock_entry_available(stock_entry: Dictionary) -> bool:
+	var min_day := int(stock_entry.get("min_day", 1))
+	if ClockService.day < min_day:
+		return false
+	var required_quest := String(stock_entry.get("required_completed_quest", ""))
+	if not required_quest.is_empty() and not QuestService.has_completed_quest(required_quest):
+		return false
+	return true
+
+
+func describe_stock_requirement(stock_entry: Dictionary) -> String:
+	var min_day := int(stock_entry.get("min_day", 1))
+	if ClockService.day < min_day:
+		return "Available on day %s." % min_day
+	var required_quest := String(stock_entry.get("required_completed_quest", ""))
+	if not required_quest.is_empty() and not QuestService.has_completed_quest(required_quest):
+		var quest = GameState.get_quest_data(required_quest)
+		return "Complete %s first." % (quest.title if quest else required_quest)
+	return ""
+
+
 func _find_stock_entry(shop, item_id: String) -> Dictionary:
 	for entry in shop.stock:
 		if String(entry.get("item_id", "")) == item_id:
 			return entry
 	return {}
+
+
+func _get_stock_lock_message(stock_entry: Dictionary) -> String:
+	var requirement := describe_stock_requirement(stock_entry)
+	if requirement.is_empty():
+		return "That item is not ready to sell yet."
+	return requirement
 
 
 func _get_daily_purchase_count(shop_id: String, item_id: String) -> int:

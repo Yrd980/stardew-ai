@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ScheduleData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/schedule_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "rowan_daily"
+npc_id = "rowan"
+entries = [{
+"start_minutes": 360,
+"map_id": "farm",
+"cell": {"x": 14, "y": 8},
+"facing": "left",
+"behavior": "talk"
+}, {
+"start_minutes": 780,
+"map_id": "farm",
+"cell": {"x": 18, "y": 9},
+"facing": "down",
+"behavior": "talk"
+}, {
+"start_minutes": 1080,
+"map_id": "house",
+"cell": {"x": 5, "y": 6},
+"facing": "down",
+"behavior": "talk"
+}]
