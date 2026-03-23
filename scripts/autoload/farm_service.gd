@@ -29,9 +29,11 @@ func plant_seed(map_id: String, cell: Vector2i, item_id: String) -> Dictionary:
 	var item = GameState.get_item_data(item_id)
 	if item == null:
 		return _result(false, "Those seeds are missing data.")
+	if InventoryService.get_total_item_count(item_id) <= 0:
+		return _result(false, "You do not have those seeds right now.")
 	if not WorldState.plant_crop(map_id, cell, item.crop_id):
 		return _result(false, "You need empty tilled soil for that.")
-	InventoryService.consume_selected_item(1)
+	InventoryService.consume_item(item_id, 1)
 	var result := _result(true, "Planted %s." % item.display_name, 5, [{
 		"type": "crop_planted",
 		"map_id": map_id,
@@ -46,9 +48,11 @@ func apply_fertilizer(map_id: String, cell: Vector2i, item_id: String) -> Dictio
 	var item = GameState.get_item_data(item_id)
 	if item == null or int(item.fertilizer_tier) <= 0:
 		return _result(false, "That is not fertilizer.")
+	if InventoryService.get_total_item_count(item_id) <= 0:
+		return _result(false, "You do not have that fertilizer right now.")
 	if not WorldState.apply_fertilizer(map_id, cell, int(item.fertilizer_tier)):
 		return _result(false, "Fertilizer only works on empty tilled soil.")
-	InventoryService.consume_selected_item(1)
+	InventoryService.consume_item(item_id, 1)
 	return _result(true, "Worked %s into the soil." % item.display_name, 5, [{
 		"type": "fertilizer_applied",
 		"map_id": map_id,
@@ -62,6 +66,8 @@ func place_selected_object(map_id: String, cell: Vector2i, item_id: String) -> D
 	var item = GameState.get_item_data(item_id)
 	if item == null or String(item.placeable_id).is_empty():
 		return _result(false, "That item cannot be placed.")
+	if InventoryService.get_total_item_count(item_id) <= 0:
+		return _result(false, "You do not have that placeable right now.")
 	if map_id != "farm":
 		return _result(false, "Farm equipment can only be placed on the farm.")
 	if FARM_BLOCKED_PLACEABLE_CELLS.has(cell):
@@ -73,7 +79,7 @@ func place_selected_object(map_id: String, cell: Vector2i, item_id: String) -> D
 	var placed: Dictionary = WorldState.place_object(map_id, cell, String(item.placeable_id))
 	if placed.is_empty():
 		return _result(false, "That tile cannot accept a placeable right now.")
-	InventoryService.consume_selected_item(1)
+	InventoryService.consume_item(item_id, 1)
 	var placeable = GameState.get_placeable_data(String(item.placeable_id))
 	return _result(true, "Placed %s." % (placeable.display_name if placeable else item.display_name), 5, [{
 		"type": "placeable_placed",

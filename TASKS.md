@@ -26,6 +26,7 @@
 - [x] Persist authoritative player actor state in save schema v5
 - [x] Export mailbox-based OpenClaw commands, results, snapshot, and room directory from Godot
 - [x] Keep NPCs fixed and schedule-owned while the player path moves to OpenClaw control
+- [x] Live-verify every currently declared player command against mailbox results, snapshots, and savegame truth
 
 ## OpenClaw Runtime Follow-Up
 

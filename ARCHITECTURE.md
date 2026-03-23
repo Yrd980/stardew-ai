@@ -144,6 +144,10 @@ The player-only bridge is a filesystem mailbox under `user://openclaw_bridge/`.
 
 V1 does not expose generic UI index commands. The supported command families are semantic player actions such as movement, tools, planting, harvesting, talking, buying, shipping, crafting, delivery claims, container mutations, and save.
 
+Interaction ids come from runtime snapshot truth rather than display labels. For example the merchant displays as Mae, but mailbox interaction uses the snapshot NPC id `merchant`.
+
+Commands that mutate placeable, seed, or fertilizer inventory consume the explicit command arg item id rather than any currently selected HUD slot.
+
 V1 also keeps NPC control out of the bridge on purpose. NPCs remain fixed schedule-driven service projections, and the bridge may query or talk to them but does not own their runtime state.
 
 ## Architectural Constraints
@@ -187,3 +191,5 @@ V1 also keeps NPC control out of the bridge on purpose. NPCs remain fixed schedu
     godot --path /home/yrd/projects/stardew-ai
     godot --headless --path /home/yrd/projects/stardew-ai --quit
     timeout 5 godot --headless --path /home/yrd/projects/stardew-ai
+
+Real mailbox verification on 2026-03-23 covered all declared player commands using mailbox results, snapshot exports, and durable save output as the authority surface rather than HUD state.

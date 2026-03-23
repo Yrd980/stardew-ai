@@ -63,7 +63,9 @@ Important command notes:
 
 - `actor_id` is currently always `player`
 - `move {direction, steps}` is partial-progress: it walks until blocked and reports applied progress in the result
+- `plant_seed`, `apply_fertilizer`, and `place_object` consume the explicit `item_id` passed in command args rather than the currently selected HUD slot
 - `buy_item`, `sleep`, `craft_recipe`, `claim_delivery`, and container commands require the player to already be adjacent to the relevant NPC or static target
+- snapshot NPC ids are runtime truth for interaction commands; for example Mae's display projection currently uses `npc_id: "merchant"`
 - NPCs are visible in snapshots and room context, but they are not OpenClaw-controlled actors in v1
 
 ## Project Layout
@@ -135,6 +137,19 @@ And inspect:
     /home/yrd/.local/share/godot/app_userdata/Stardew AI/openclaw_bridge/results/
     /home/yrd/.local/share/godot/app_userdata/Stardew AI/openclaw_bridge/snapshot.json
     /home/yrd/.local/share/godot/app_userdata/Stardew AI/savegame.json
+
+Live mailbox verification on 2026-03-23 exercised every declared player command against runtime truth:
+
+- `hello`, `get_snapshot`, `get_room_directory`
+- `move`, `face`, `use_tool`, `plant_seed`, `apply_fertilizer`, `harvest`, `place_object`
+- `talk_to`, `buy_item`, `ship_inventory_slot`, `sleep`
+- `craft_recipe`, `claim_delivery`, `container_store`, `container_take`, `save_game`
+
+That verification used:
+
+- mailbox result files under `user://openclaw_bridge/results/*.json`
+- live snapshots under `user://openclaw_bridge/snapshot.json`
+- durable save output under `/home/yrd/.local/share/godot/app_userdata/Stardew AI/savegame.json`
 
 ## Docs
 

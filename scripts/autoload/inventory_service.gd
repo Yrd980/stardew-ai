@@ -80,6 +80,37 @@ func remove_amount(index: int, amount: int) -> void:
 	inventory_changed.emit()
 
 
+func get_total_item_count(item_id: String, quality: String = "") -> int:
+	var total := 0
+	for slot in slots:
+		if String(slot.get("item_id", "")) != item_id:
+			continue
+		if not quality.is_empty() and String(slot.get("quality", "normal")) != quality:
+			continue
+		total += int(slot.get("count", 0))
+	return total
+
+
+func consume_item(item_id: String, amount: int, quality: String = "") -> bool:
+	if amount <= 0:
+		return true
+	var remaining: int = amount
+	for index in range(slots.size()):
+		if remaining <= 0:
+			break
+		var slot := get_slot(index)
+		if String(slot.get("item_id", "")) != item_id:
+			continue
+		if not quality.is_empty() and String(slot.get("quality", "normal")) != quality:
+			continue
+		var used: int = min(remaining, int(slot.get("count", 0)))
+		if used <= 0:
+			continue
+		remove_amount(index, used)
+		remaining -= used
+	return remaining == 0
+
+
 func consume_selected_item(amount: int = 1) -> void:
 	remove_amount(selected_index, amount)
 
